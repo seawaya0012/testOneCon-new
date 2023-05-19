@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import axios from "axios";
 
 //Library
 import {
@@ -17,7 +16,6 @@ import {
 import PropTypes from 'prop-types';
 import { styled, useTheme } from '@mui/material/styles';
 import Swal from "sweetalert2/dist/sweetalert2.js";
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 //Icon
 import CloseIcon from '@mui/icons-material/Close';
@@ -28,16 +26,6 @@ import ClearIcon from '@mui/icons-material/Clear';
 const BootstrapDialog = styled(Dialog)({
   "& > .css-yiavyu-MuiBackdrop-root-MuiDialog-backdrop": {
     backgroundColor: 'rgba(0, 0, 0, 0)'
-  }
-});
-
-const BOLD = createTheme({
-  typography: {
-    "fontFamily": `"Kanit", sans-serif`,
-    "fontSize": 14,
-    "fontWeightLight": 400,
-    "fontWeightRegular": 600,
-    "fontWeightMedium": 700
   }
 });
 
@@ -71,7 +59,7 @@ BootstrapDialogTitle.propTypes = {
 };
 
 function UnLockParticipants(props) {
-  const { pexRTC, meetID, one_id, participantName, openLockParticipants, setOpenLockParticipants, listParticipants } = props;
+  const { pexRTC, openLockParticipants, setOpenLockParticipants, listParticipants } = props;
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
   const data = listParticipants?.filter(user => user?.service_type === 'waiting_room')
@@ -81,9 +69,8 @@ function UnLockParticipants(props) {
   };
 
   function acceptAllParticipant() {
-    for (let i = 0; i < data.length; i++) {
+    for(let i = 0 ; i < data.length ; i++){
       pexRTC.unlockParticipant(data[i].uuid)
-      whenApprove(data[i].uuid)
     }
     setOpenLockParticipants(false);
     Swal.fire({
@@ -97,9 +84,8 @@ function UnLockParticipants(props) {
   }
 
   function declideAllParticipant() {
-    for (let i = 0; i < data.length; i++) {
+    for(let i = 0 ; i < data.length ; i++){
       pexRTC.disconnectParticipant(data[i].uuid)
-      whenReject(data[i].uuid)
     }
     setOpenLockParticipants(false);
     Swal.fire({
@@ -114,48 +100,10 @@ function UnLockParticipants(props) {
 
   function acceptParticipant(uuid) {
     pexRTC.unlockParticipant(uuid)
-    whenApprove(uuid)
-  }
-
-  //Handle when Lock room
-  async function whenApprove(uuid) {
-    try {
-      const response = await axios({
-        method: 'POST',
-        url: process.env.REACT_APP_API + '/api/vi/activity/approve',
-        data: {
-          meeting_id: meetID,
-          callid: uuid
-        }
-      })
-      console.log(response);
-    } catch (err) {
-      console.log(err);
-    }
   }
 
   function declideParticipant(uuid) {
     pexRTC.disconnectParticipant(uuid)
-    whenReject(uuid)
-  }
-
-  //Handle when Lock room
-  async function whenReject(uuid) {
-    try {
-      const response = await axios({
-        method: 'POST',
-        url: process.env.REACT_APP_API + '/api/vi/activity/reject',
-        data: {
-          meeting_id: meetID,
-          callid: uuid,
-          oneid: "No",
-          name: participantName
-        }
-      })
-      console.log(response);
-    } catch (err) {
-      console.log(err);
-    }
   }
 
   function unlockParticipants() {
@@ -168,40 +116,7 @@ function UnLockParticipants(props) {
       confirmButtonText: "OK",
       allowOutsideClick: false,
     });
-    whenUnLockroom()
-  }
-
-  //Handle when unLock room
-  async function whenUnLockroom() {
-    const value = await setObject()
-    try {
-      const response = await axios({
-        method: 'POST',
-        url: process.env.REACT_APP_API + '/api/vi/activity/unlock',
-        data: {
-          meeting_id: meetID,
-          list_user: value
-        }
-      })
-      if(response.data.message === 'Room is unlocked.') {
-        pexRTC.setConferenceLock(false)
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  const setObject = () => {
-    const value = []
-    for (let i = 0; i < data.length; i++) {
-      value[i] = {
-        callid: data[i].uuid,
-        oneid: "No",
-        name: data[i].display_name,
-        vote: false
-      }
-    }
-    return value;
+    pexRTC.setConferenceLock(false)
   }
 
   return (
@@ -213,9 +128,7 @@ function UnLockParticipants(props) {
         fullScreen={fullScreen}
       >
         <BootstrapDialogTitle id="customized-dialog-title" onClose={handleClose}>
-          <ThemeProvider theme={BOLD}>
-            <Typography>รายชื่อคนรอเข้าประชุม</Typography>
-          </ThemeProvider>
+          รายชื่อคนรอเข้าประชุม
         </BootstrapDialogTitle>
         <DialogContent dividers>
           <Box sx={{ minWidth: 350, maxWidth: 450, minHeight: 250, maxHeight: 250 }}>

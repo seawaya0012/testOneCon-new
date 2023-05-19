@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import img1 from './ImagesLayout/7+1.svg';
+// import img1 from './ImagesLayout/7+1.svg';
 
 //Library
 import {
@@ -30,56 +30,51 @@ const BootstrapDialog = styled(Dialog)({
 
 const itemData1 = [
   {
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/7+1.svg',
-    img: 'https://i.imgur.com/3uLlgyA.png',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/7+1.svg',
+    // img: 'img1',
     title: '1:7',
   },
   {
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/21+1.svg',
-    img: 'https://i.imgur.com/e5ELovl.png',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/21+1.svg',
+    // img: '../../../public/ImagesLayout/21+1.svg',
     title: '1:21',
   },
   {
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/21+2.svg',
-    img: 'https://i.imgur.com/lgbyWKr.png',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/21+2.svg',
+    // img: '../../../public/ImagesLayout/21+2.svg',
     title: '2:21',
   },
   {
-    img: 'https://i.imgur.com/rl1Smx8.png',
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/33+1.svg',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/33+1.svg',
+    // img: '../../../public/ImagesLayout/33+1.svg',
     title: '1:33',
   },
   {
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/5+7.svg',
-    img: 'https://i.imgur.com/WqTWTvp.png',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/5+7.svg',
+    // img: '../../../public/ImagesLayout/5+7.svg',
     title: '5:7',
   }
 ];
 
 const itemData2 = [
   {
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/1+0.svg',
-    img: 'https://i.imgur.com/eq2Wc2H.png',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/1+0.svg',
     title: '1:0',
   },
   {
-    img: 'https://i.imgur.com/NAkC1zP.png',
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/4+0.svg',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/4+0.svg',
     title: '4:0',
   },
   {
-    img: 'https://i.imgur.com/fZIGQwO.png',
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/9+0.svg',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/9+0.svg',
     title: '9:0',
   },
   {
-    img: 'https://i.imgur.com/Ff0l6Tl.png',
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/16+0.svg',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/16+0.svg',
     title: '16:0',
   },
   {
-    // img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/25+0.svg',
-    img: 'https://i.imgur.com/eYua5VP.png',
+    img: 'https://pexip-edge1.one.th/webapp/custom_configuration/plugins/layout2/25+0.svg',
     title: '25:0',
   }
 ];
@@ -168,9 +163,9 @@ function DialogLayout(props) {
                   <Box sx={{ py: 1, px: 1, background: "#6384B6", borderRadius: 1 }}>
                     <ImageListItem key={item.img}>
                       <img
-                        src={`${item.img}`}
-                        srcSet={`${item.img}`}
-                        // src='7+1.svg'
+                        src={`${item.img}?w=164&h=164&fit=crop&auto=format`}
+                        srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
+                        // src={img}
                         alt={item.title}
                         loading="lazy"
                         onClick={() => handleLayout(item.title)}
@@ -180,8 +175,8 @@ function DialogLayout(props) {
                 ) : (
                   <ImageListItem key={item.img}>
                     <img
-                      src={`${item.img}`}
-                      srcSet={`${item.img}`}
+                      src={`${item.img}?w=164&h=164&fit=crop&auto=format`}
+                      srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
                       // src={img}
                       alt={item.title}
                       loading="lazy"
@@ -203,8 +198,8 @@ function DialogLayout(props) {
                   <Box sx={{ py: 1, px: 1, background: "#6384B6", borderRadius: 1 }}>
                     <ImageListItem key={item.img}>
                       <img
-                        src={`${item.img}`}
-                        srcSet={`${item.img}`}
+                        src={`${item.img}?w=164&h=164&fit=crop&auto=format`}
+                        srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
                         alt={item.title}
                         loading="lazy"
                         onClick={() => handleLayout(item.title)}
@@ -214,8 +209,8 @@ function DialogLayout(props) {
                 ) : (
                   <ImageListItem key={item.img}>
                     <img
-                      src={`${item.img}`}
-                      srcSet={`${item.img}`}
+                      src={`${item.img}?w=164&h=164&fit=crop&auto=format`}
+                      srcSet={`${item.img}?w=164&h=164&fit=crop&auto=format&dpr=2 2x`}
                       alt={item.title}
                       loading="lazy"
                       onClick={() => handleLayout(item.title)}

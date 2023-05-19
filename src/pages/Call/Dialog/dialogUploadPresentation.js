@@ -1,10 +1,7 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Document, Page } from 'react-pdf';
 import { useDropzone } from 'react-dropzone';
-
-//CSS
-import '../CSS/Upload.scss'
 
 //Library
 import {
@@ -15,7 +12,7 @@ import {
   DialogContent,
   DialogActions,
   useMediaQuery,
-  Typography
+  Box
 } from '@mui/material';
 import LoadingButton from '@mui/lab/LoadingButton';
 import PropTypes from 'prop-types';
@@ -63,14 +60,11 @@ BootstrapDialogTitle.propTypes = {
 };
 
 function DialogUploadPresentation(props) {
-  const { pexRTC, dialURI, listParticipants, openDialogFilePre, setOpenDialogFilePre, presenter, setFileImages, setStatePresentationFile } = props;
+  const { pexRTC, dialURI, openDialogFilePre, setOpenDialogFilePre, fileImages, setFileImages, setStatePresentationFile } = props;
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
   const [selectedFile, setSelectedFile] = useState(null);
   const [loadingUpload, setLoadingUpload] = useState(false);
-
-  // state check jpeg or pdf file 
-  const sateFile = useRef(false)
 
   const handleClose = () => {
     setOpenDialogFilePre(false);
@@ -172,7 +166,7 @@ function DialogUploadPresentation(props) {
     const canvas = document.createElement("canvas");
     for (let i = 0; i < pdf.numPages; i++) {
       const page = await pdf.getPage(i + 1);
-      const viewport = page.getViewport({ scale: 2 });
+      const viewport = page.getViewport({ scale: 1 });
       const context = canvas.getContext("2d");
       canvas.height = viewport.height;
       canvas.width = viewport.width;
@@ -189,11 +183,6 @@ function DialogUploadPresentation(props) {
   }
 
   async function sendFileToPexitp() {
-    // if (sateFile.current) {
-    //   pexRTC.sendChatMessage('5|' + presenter)
-    //   const delay = ms => new Promise(res => setTimeout(res, ms));
-    //   await delay(1000);
-    // }
     try {
       const response = await axios({
         method: "post",
@@ -202,13 +191,13 @@ function DialogUploadPresentation(props) {
         headers: { token: pexRTC.token },
       });
       if (response.data.status === "success") {
-        // setStatePresentationFile(true)
+        setStatePresentationFile(true)
         handleSubmit(selectedFile)
       }
     } catch (error) {
-      setOpenDialogFilePre(false)
+      console.log(error)
       Swal.fire({
-        title: 'สกุลไฟล์ไม่รองรับ',
+        title: error,
         text: "",
         icon: "error",
         showCancelButton: false,
@@ -229,17 +218,6 @@ function DialogUploadPresentation(props) {
       setFileImages([data])
       setSelectedFile(event.target.files[0])
     }
-
-    //Check user presenting?
-    // if (event.target.files[0].type === "application/pdf" || event.target.files[0].type === "image/png") {
-    //   if (presenter !== '') {
-    //     sateFile.current = true
-    //   } else {
-    //     sateFile.current = false
-    //   }
-    // } else {
-    //   sateFile.current = false
-    // }
   }
 
   const handleSubmit = async (file) => {
@@ -254,29 +232,17 @@ function DialogUploadPresentation(props) {
       });
       if (response.data.status === "success") {
         setOpenDialogFilePre(false)
-        setStatePresentationFile(true)
       }
     } catch (error) {
-      setOpenDialogFilePre(false)
+      console.log(error)
       Swal.fire({
-        title: 'สกุลไฟล์ไม่รองรับ',
+        title: error,
         text: "",
         icon: "error",
         showCancelButton: false,
         confirmButtonText: "OK",
         allowOutsideClick: false,
       });
-      try {
-        const response = await axios({
-          method: "post",
-          url: process.env.REACT_APP_WEB_PEX_RTC + '/api/client/v2/conferences/' + dialURI + '/participants/' + pexRTC.uuid + '/release_floor',
-          data: { "jpegs": true },
-          headers: { token: pexRTC.token },
-        });
-        console.log(response)
-      } catch (error) {
-        console.log(error)
-      }
     }
   }
 
@@ -316,15 +282,7 @@ function DialogUploadPresentation(props) {
           </div> */}
           {/* ---------------------- */}
           {/* <form onSubmit={handleSubmit}> */}
-          <label htmlFor="images" className="drop-container">
-            <span className="drop-title">อัปโหลดรองรับแค่ JPEG และ PDF ไฟล์เท่านั้น</span>
-            or
-            <input type="file" id="images" name="file" accept="application/pdf, image/jpeg" onChange={handleFileSelect} required />
-          </label>
-          {/* <Typography gutterBottom>
-            อัปโหลดรองรับแค่ JPEG และ PDF ไฟล์เท่านั้น
-          </Typography>
-          <input type="file" name="file" accept="application/pdf, image/jpeg" onChange={handleFileSelect} /> */}
+          <input type="file" name="file" accept="application/pdf, image/jpeg" onChange={handleFileSelect} />
           {/* <input type="submit" value="Upload File" /> */}
           {/* </form> */}
 
@@ -340,11 +298,11 @@ function DialogUploadPresentation(props) {
                 startIcon={<SaveIcon />}
                 variant="outlined"
               >
-                อัปโหลด
+                อัพโหลด
               </LoadingButton>
             ) : (
               <Button variant="contained" onClick={() => sendFileToPexitp()}>
-                อัปโหลด
+                อัพโหลด
               </Button>
             )}
           </div>

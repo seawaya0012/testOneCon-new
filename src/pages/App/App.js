@@ -7,12 +7,11 @@ import 'typeface-roboto';
 
 import Call from '../Call/Call';
 import JoinCall from '../Join/joinCall';
-import EndMeeting from '../End/endMeeting';
-import LoadingView from '../Call/Loading/loadingView';
 
 // Test
 import RoomTest from '../TestRoom/Login';
 import Guest from '../TestRoom/LoginGuest';
+import LoadingView from '../Call/Loading/loadingView';
 
 function App() {
   const navigate = useNavigate();
@@ -28,48 +27,24 @@ function App() {
   const [pinGuest, setPinGuest] = useState("")
   const [guestLink, setGuestLink] = useState("")
   const [uuidRoom, setUuidRoom] = useState("")
-  const [meetID, setMeetID] = useState("")
-  const [accessToken, setAccessToken] = useState("")
-  const [refreshToken, setRefreshToken] = useState("")
-  const [stateLockRoom, setsStateLockRoom] = useState(false)
-
-  //Dialog Setting
-  const [selectTab, setSelectTab] = useState('AUDIO')
-
-  // LoadingViewM
-  const [loading, setLoading] = useState(true);
+  const [meetID, setMeetID] = useState("") 
+  const [accessToken, setAccessToken] = useState("") 
 
   //presentation file
   const [fileImages, setFileImages] = useState([]);
   const [statePresentationFile, setStatePresentationFile] = useState(false)
   const [indexOfPage, setIndexOfPage] = useState(0)
 
-  // Presentation
-  const [statePresentation, setStatePresentation] = useState(false);
-  const [quality, setQuality] = useState('SD');
-  const [presenter, setPresenter] = useState('')
-
   //Vote System
   const [vote, setVote] = useState('')
-  const [voteSecret, setVoteSecret] = useState(false)
-  const [one_id, setOne_id] = useState('')
-  const [indVote, setindVote] = useState(null);
-  //open Vote For Host 
   const [stateVote, setStateVote] = useState(false);
-  const [openDialogVote, setOpenDialogVote] = useState(false);
-  //open Vote For Guest 
-  const [stateVoteGuest, setStateVoteGuest] = useState(false);
-  const [stateCheckGuestLogin, setStateCheckGuestLogin] = useState(false);
-  const [stateCheckAuthority, setStateCheckAuthority] = useState(false);
 
   //control Microphone and Video
   const [micMute, setMicMute] = useState(false);
   const [vidMute, setVidMute] = useState(false);
-  const [stateMic, setStateMic] = useState(null)
 
   //cameraUser
-  const [stateSwitchCam, setStateSwitchCam] = useState(false);
-  const [streamCamera, setStreamCamera] = useState(null);
+  const pexipCamera = useRef(null);
 
   //Dialog
   const [openDialog, setOpenDialog] = useState(false);
@@ -80,7 +55,6 @@ function App() {
 
   //Listparticipant
   const [countParticipants, setCountParticipants] = useState(0)
-  const [countBuzz, setCountBuzz] = useState(0)
 
   //CheackRole
   const [checkRole, setCheckRole] = useState(null);
@@ -91,10 +65,6 @@ function App() {
   //SetupDevices
   const [selectAudio, setSelectAudio] = useState('default');
   const [selectVideo, setSelectVideo] = useState(null)
-  const [selectOutput, setSelectOutput] = useState('default');
-  // Check setSink
-  const [stateOutput, setStateOutput] = useState(false);
-  const audioRef = useRef(null);
 
   //Ontest
   const [openMessages, setOpenMessages] = useState(false);
@@ -104,23 +74,11 @@ function App() {
   const [conferenceUpdate, setConferenceUpdate] = useState()
 
   //OneChat
+  const [room_idGuest, setRoom_idGuest] = useState('')
   const [authen_tokenGuest, setAuthen_tokenGuest] = useState('')
   const [room_id, setRoom_id] = useState('')
-  const [status_room_id, setStatus_room_id] = useState('')
-  const [member_id, setMember_id] = useState('')
   const [authen_token, setAuthen_token] = useState('')
   const [refresh_token, setRefresh_token] = useState('')
-
-  //Change background
-  const [detect, setDetect] = useState(false);
-  const [customVideo, setCustomVideo] = useState()
-  const [backgroundSelect, setBackgroundSelect] = useState(null)
-  const [loadingCamera, setLoadingCamera] = useState(false);
-  const [stateUpload, setStateUpload] = useState(false)
-  const [dataUpload, setDataUpload] = useState('')
-
-  //Block Devices
-  const [blockDevice, setBlockDevice] = useState(false)
 
   return (
     <Routes>
@@ -174,17 +132,11 @@ function App() {
             setMeetID={setMeetID}
             setVote={setVote}
             setAccessToken={setAccessToken}
-            setRefreshToken={setRefreshToken}
+            setRoom_idGuest={setRoom_idGuest}
             setAuthen_tokenGuest={setAuthen_tokenGuest}
-            setStatus_room_id={setStatus_room_id}
-            setMember_id={setMember_id}
-            setOne_id={setOne_id}
-            setsStateLockRoom={setsStateLockRoom}
-            setBlockDevice={setBlockDevice}
           />
         }
       />
-      {/* for Host */}
       <Route
         path='/webrtcapp/call/'
         element={
@@ -200,6 +152,7 @@ function App() {
             setMicMute={setMicMute}
             vidMute={vidMute}
             setVidMute={setVidMute}
+            pexipCamera={pexipCamera}
             openDialog={openDialog}
             setOpenDialog={setOpenDialog}
             countParticipants={countParticipants}
@@ -247,55 +200,6 @@ function App() {
             setIndexOfPage={setIndexOfPage}
             openDialogPartiForMobile={openDialogPartiForMobile}
             setOpenDialogPartiForMobile={setOpenDialogPartiForMobile}
-            statePresentation={statePresentation}
-            setStatePresentation={setStatePresentation}
-            quality={quality}
-            setQuality={setQuality}
-            status_room_id={status_room_id}
-            member_id={member_id}
-            openDialogVote={openDialogVote}
-            setOpenDialogVote={setOpenDialogVote}
-            stateLockRoom={stateLockRoom}
-            indVote={indVote}
-            setindVote={setindVote}
-            setVote={setVote}
-            stateMic={stateMic}
-            setStateMic={setStateMic}
-            stateSwitchCam={stateSwitchCam}
-            setStateSwitchCam={setStateSwitchCam}
-            loading={loading}
-            setLoading={setLoading}
-            countBuzz={countBuzz}
-            setCountBuzz={setCountBuzz}
-            setPresenter={setPresenter}
-            presenter={presenter}
-            voteSecret={voteSecret}
-            setVoteSecret={setVoteSecret}
-            setAccessToken={setAccessToken}
-            refreshToken={refreshToken}
-            setRefreshToken={setRefreshToken}
-            streamCamera={streamCamera}
-            setStreamCamera={setStreamCamera}
-            audioRef={audioRef}
-            selectOutput={selectOutput}
-            setSelectOutput={setSelectOutput}
-            stateOutput={stateOutput}
-            setStateOutput={setStateOutput}
-            selectTab={selectTab}
-            setSelectTab={setSelectTab}
-            customVideo={customVideo}
-            setCustomVideo={setCustomVideo}
-            backgroundSelect={backgroundSelect}
-            setBackgroundSelect={setBackgroundSelect}
-            detect={detect}
-            setDetect={setDetect}
-            blockDevice={blockDevice}
-            loadingCamera={loadingCamera}
-            setLoadingCamera={setLoadingCamera}
-            dataUpload={dataUpload}
-            setDataUpload={setDataUpload}
-            stateUpload={stateUpload}
-            setStateUpload={setStateUpload}
           />
         }
       />
@@ -316,6 +220,7 @@ function App() {
             setMicMute={setMicMute}
             vidMute={vidMute}
             setVidMute={setVidMute}
+            pexipCamera={pexipCamera}
             openDialog={openDialog}
             setOpenDialog={setOpenDialog}
             countParticipants={countParticipants}
@@ -360,70 +265,11 @@ function App() {
             setIndexOfPage={setIndexOfPage}
             openDialogPartiForMobile={openDialogPartiForMobile}
             setOpenDialogPartiForMobile={setOpenDialogPartiForMobile}
+            room_idGuest={room_idGuest}
             authen_tokenGuest={authen_tokenGuest}
             setRoom_id={setRoom_id}
             setAuthen_token={setAuthen_token}
             setRefresh_token={setRefresh_token}
-            statePresentation={statePresentation}
-            setStatePresentation={setStatePresentation}
-            quality={quality}
-            setQuality={setQuality}
-            status_room_id={status_room_id}
-            member_id={member_id}
-            openDialogVote={openDialogVote}
-            setOpenDialogVote={setOpenDialogVote}
-            stateVoteGuest={stateVoteGuest}
-            setStateVoteGuest={setStateVoteGuest}
-            stateCheckGuestLogin={stateCheckGuestLogin}
-            setStateCheckGuestLogin={setStateCheckGuestLogin}
-            one_id={one_id}
-            stateCheckAuthority={stateCheckAuthority}
-            setStateCheckAuthority={setStateCheckAuthority}
-            stateMic={stateMic}
-            setStateMic={setStateMic}
-            stateSwitchCam={stateSwitchCam}
-            setStateSwitchCam={setStateSwitchCam}
-            loading={loading}
-            setLoading={setLoading}
-            countBuzz={countBuzz}
-            setCountBuzz={setCountBuzz}
-            setPresenter={setPresenter}
-            presenter={presenter}
-            voteSecret={voteSecret}
-            setVoteSecret={setVoteSecret}
-            streamCamera={streamCamera}
-            setStreamCamera={setStreamCamera}
-            audioRef={audioRef}
-            selectOutput={selectOutput}
-            setSelectOutput={setSelectOutput}
-            stateOutput={stateOutput}
-            setStateOutput={setStateOutput}
-            selectTab={selectTab}
-            setSelectTab={setSelectTab}
-            customVideo={customVideo}
-            setCustomVideo={setCustomVideo}
-            backgroundSelect={backgroundSelect}
-            setBackgroundSelect={setBackgroundSelect}
-            detect={detect}
-            setDetect={setDetect}
-            blockDevice={blockDevice}
-            loadingCamera={loadingCamera}
-            setLoadingCamera={setLoadingCamera}
-            dataUpload={dataUpload}
-            setDataUpload={setDataUpload}
-            stateUpload={stateUpload}
-            setStateUpload={setStateUpload}
-          />
-        }
-      />
-
-      <Route
-        path='/webrtcapp/endmeet/'
-        element={
-          <EndMeeting
-            navigate={navigate}
-            pexRTC={pexRTC}
-            guestLink={guestLink}
           />
         }
       />

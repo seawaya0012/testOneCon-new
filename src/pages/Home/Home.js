@@ -42,10 +42,54 @@ function Home({ navigate, pexRTC, setDialURI, setParticipantName, setPin }) {
     // setPin(pin.current.value)
     setPin(process.env.REACT_APP_HOSTPIN)
 
+    let constraints = {
+      // video: {
+      //   deviceId: {
+      //     exact: "ac756d765f2cac116a2dcfda82fb9b31f5464c8028b60086227df2113952c1e2"
+      //   },
+      //   width: {
+      //     ideal: 1920
+      //   },
+      //   height: {
+      //     ideal: 1080
+      //   },
+      //   pan: true,
+      //   tilt: true,
+      //   zoom: true
+      // },
+      video: {
+        width: { min: 1024, ideal: 1280, max: 1920 },
+        height: { min: 576, ideal: 720, max: 1080 }
+      },
+      audio: {
+        deviceId: {
+          exact: pexRTC.audio_source = selectAudio
+        }
+      }
+    }
+    // getMediaDevices(constraints)
+
     // navigate('/zoom');
     // navigate('/testtcall');
     navigate('/webrtcapp/call');
     
+  }
+
+  useEffect(() => {
+    // getDevice();
+  }, []);
+
+  async function getDevice() {
+    let devices = await navigator.mediaDevices.enumerateDevices();
+    let video_devices = devices.filter((d) => d.kind === 'videoinput');
+    let audio_devices = devices.filter((d) => d.kind === 'audioinput');
+    setVideoDevices(video_devices);
+    setAudioDevices(audio_devices);
+    setAudio(audio_devices[3].deviceId)
+  }
+
+  async function getMediaDevices(constraints) {
+    await navigator.mediaDevices.getUserMedia(constraints);
   }
 
   return (

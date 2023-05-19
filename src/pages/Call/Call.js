@@ -1,9 +1,9 @@
 import React, { useRef, useEffect, useState } from 'react';
 import Swal from "sweetalert2/dist/sweetalert2.js";
-import axios from "axios";
 
 //CSS
 import './Call.scss';
+import DialogCSS from './CSS/Dialog.module.scss';
 
 //Component
 import ToolFunction from './Tool/toolFunction';
@@ -14,19 +14,69 @@ import ToolOpenCamera from './Tool/toolOpenCamera';
 import DraWer from './Component/draWer';
 import LoadingView from './Loading/loadingView';
 import ImagesPresentation from './Component/imagesPresentation';
-import VideoPresentation from './Component/videoPresentation';
-import RunCanvasBG from './Component/runCanvasBG';
-import ConferenceWhenShareScreen from './Component/conferenceWhenShareScreen';
-import ToolOpenConference from './Tool/toolOpenConference';
 
 //Library
 import { styled, useTheme } from '@mui/material/styles';
 import {
+  Button,
+  Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Dialog,
+  IconButton,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
   Box,
+  useMediaQuery
 } from '@mui/material';
+
+//Icon
+import CloseIcon from '@mui/icons-material/Close';
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 
 const drawerWidth = 330;
 // const xsWidth = 50;
+
+const BootstrapDialog = styled(Dialog)({
+  "& > .css-yiavyu-MuiBackdrop-root-MuiDialog-backdrop": {
+    backgroundColor: 'rgba(0, 0, 0, 0)'
+  }
+},
+  ({ theme }) => ({
+    '& .MuiDialogContent-root': {
+      padding: theme.spacing(2),
+    },
+    '& .MuiDialogActions-root': {
+      padding: theme.spacing(1),
+    },
+  }));
+
+function BootstrapDialogTitle(props) {
+  const { children, onClose, ...other } = props;
+  return (
+    <DialogTitle sx={{ m: 0, p: 2 }} {...other}>
+      {children}
+      {onClose ? (
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
+      ) : null}
+    </DialogTitle>
+  );
+}
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme, open }) => ({
@@ -53,92 +103,63 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
 );
 
 function Call(props) {
-  const {
-    navigate,
-    pexRTC,
-    dialURI,
-    participantName,
-    pin,
-    pexipCamera,
-    setCheckRole,
-    checkRole,
-    authen_token,
-    fileImages,
-    statePresentationFile,
-    openMessages,
-    selectAudio,
-    selectVideo,
-    micMute,
-    vidMute,
-    typePexRTC,
-    bandwidth,
-    room_id,
-    stateLockRoom,
-    setUuid,
-    indexOfPage,
-    setIndexOfPage,
-    stateCloseCamera,
-    setStateCloseCamera,
-    statePresentation,
-    setStatePresentation,
-    quality,
-    listParticipants,
-    stateSwitchCam,
-    setStateSwitchCam,
-    meetID,
-    setStatePresentationFile,
-    loading,
-    setLoading,
-    setPresenter,
-    streamCamera,
-    setStreamCamera,
-    audioRef,
-    selectOutput,
-    setStateOutput,
-    customVideo,
-    setCustomVideo,
-    backgroundSelect,
-    detect,
-    loadingCamera,
-    setLoadingCamera
-  } = props
+  const { navigate, pexRTC, dialURI, participantName, pin, pexipCamera, setCheckRole, openDialog, checkRole, authen_token, fileImages, statePresentationFile,
+    setOpenDialog, openMessages, selectAudio, setSelectAudio, selectVideo, setSelectVideo, micMute, vidMute, typePexRTC, bandwidth, uuidRoom,
+    setUuid, indexOfPage, setIndexOfPage } = props
   const pexipVideoRef = useRef(null);
+  const pexipSoundRef = useRef(null);
   const [streamSrc, setStreamSrc] = useState(null);
-  // const [loading, setLoading] = useState(true); ย้ายไปประกาศใน app
+  const [streamCamera, setStreamCamera] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   // Presentation
-  // const [statePresentation, setStatePresentation] = useState(false);
+  const [statePresentation, setStatePresentation] = useState(false);
   const [statePresentationOutputFIle, setStatePresentationOutputFIle] = useState(false);
   const [streamPresentation, setStreamPresentation] = useState(null);
+  const [stateEndPresentation, setStateEndPresentation] = useState(null);
   const [urlPresentation, setUrlPresentation] = useState(null);
-  // const [quality, setQuality] = useState('HD');
-  // when share call Conference
-  const [stateCloseConference, setStateCloseConference] = useState(true)
+
+  // Setup Device
+  const [selectTab, setSelectTab] = React.useState('AUDIO')
+  const [videoDevices, setVideoDevices] = useState([]);
+  const [audioDevices, setAudioDevices] = useState([]);
+  const handleChangeVideo = (event) => {
+    setSelectVideo(event.target.value);
+  };
+  const handleChangeAudio = (event) => {
+    setSelectAudio(event.target.value);
+  };
+  // let constraints = {
+  //   video: {
+  //     width: { ideal: 1920, max: 1920 },
+  //     height: { ideal: 1920, max: 1080 },
+  //     deviceId: {
+  //       exact: pexRTC.video_source = selectVideo
+  //     }
+  //   },
+  //   audio: {
+  //     deviceId: {
+  //       exact: pexRTC.audio_source = selectAudio
+  //     }
+  //   }
+  // }
+
+  function setDeviceTest() {
+    pexRTC.video_source = selectVideo
+    pexRTC.audio_source = selectAudio
+  }
 
   useEffect(() => {
+    // Setup Devices
+    setDeviceTest()
+
     // Setup Pexip
     pexRTC.onSetup = callSetup;
     pexRTC.onConnect = callConnected;
     pexRTC.onError = callError;
     pexRTC.onDisconnect = callDisconnected;
-    pexRTC.video_source = selectVideo
-    pexRTC.audio_source = selectAudio
-    pexRTC.muteAudio(micMute)
-    pexRTC.muteVideo(vidMute)
-    if (stateLockRoom) {
-      pexRTC.setConferenceLock(stateLockRoom)
-    }
-
-    // pexRTC.transformLayout({
-    // layout: 'ac',
-    // enable_extended_ac: true,
-    //   streaming_indicator: false,
-    //   recording_indicator: false,
-    //   transcribing_indicator: false,
-    //   enable_active_speaker_indication: true,
-    //   enable_overlay_text: true,
-    //   plus_n_pip_enabled: false
-    // })
 
     // Presentation
     pexRTC.onPresentation = callSharedScreen;
@@ -146,248 +167,124 @@ function Call(props) {
     pexRTC.onPresentationDisconnected = callPresentationDisconnected;
 
     // Make the actual call with the PexRTC Library
-    pexRTC.makeCall(
-      process.env.REACT_APP_NODE_PEX_RTC,
-      dialURI,
-      participantName,
-      bandwidth,
-    );
-
-    //setTimeout
-    // timeout(60000)
-    // timeoutAnnounce(60000/1.2, 60000)
-
-    //Create Data on DataBase
-    createData()
+    if (typePexRTC === '') {
+      pexRTC.makeCall(
+        process.env.REACT_APP_NODE_PEX_RTC,
+        dialURI,
+        participantName,
+        bandwidth
+      );
+    }
+    if (typePexRTC !== '') {
+      pexRTC.makeCall(
+        process.env.REACT_APP_NODE_PEX_RTC,
+        dialURI,
+        participantName,
+        bandwidth,
+        typePexRTC
+      );
+    }
 
     return () => {
       pexRTC.disconnect();
     };
   }, []);
 
-  //Create Data putSession on DB
-  async function createData() {
-    try {
-      const response = await axios({
-        method: 'POST',
-        url: process.env.REACT_APP_API + '/api/vi/activity/create',
-        data: {
-          meeting_id: meetID
-        }
-      })
-      console.log(response);
-      if (stateLockRoom) {
-        whenLockroom()
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  //Handle when Create room with Lock room
-  async function whenLockroom() {
-    try {
-      const response = await axios({
-        method: 'POST',
-        url: process.env.REACT_APP_API + '/api/vi/activity/lock',
-        data: {
-          meeting_id: meetID
-        }
-      })
-      console.log(response);
-    } catch (err) {
-      console.log(err);
-    }
-  }
-
-  async function timeoutAnnounce(time, set) {
-    const delay = ms => new Promise(res => setTimeout(res, ms));
-    await delay(time);
-    pexRTC.sendChatMessage('0|เวลาการใช้งาน conference กำลังจะหมดในอีก ' + ((set / 1000) - (time / 1000)) + ' วินาที')
-  }
-
-  async function timeout(time) {
-    const delay = ms => new Promise(res => setTimeout(res, ms));
-    await delay(time);
-    disconnectAllParticipant()
-  }
-
-  async function disconnectAllParticipant() {
-    try {
-      const response = await axios({
-        method: "post",
-        url: process.env.REACT_APP_WEB_PEX_RTC + '/api/client/v2/conferences/' + dialURI + '/disconnect',
-        headers: { token: pexRTC.token },
-      });
-      if (response.data.status === "success") {
-        closeRoom()
-      }
-    } catch (error) {
-      if (typePexRTC === '' && window.localStream !== undefined) {
-        window.localStream.getVideoTracks()[0].stop();
-      }
-      window.open(process.env.REACT_APP_REDIRECT_LOBBY + '/redirectlobby', '_self')
-    }
-  }
-
-  async function closeRoom() {
-    try {
-      const response = await axios({
-        method: "post",
-        url: process.env.REACT_APP_API + '/api/v1/room/autocloseRTC',
-        data: {
-          meeting_id: meetID
-        },
-      });
-      if (response.data.status === "success") {
-        if (typePexRTC === '' && window.localStream !== undefined) {
-          window.localStream.getVideoTracks()[0].stop();
-        }
-        window.open(process.env.REACT_APP_REDIRECT_LOBBY + '/redirectlobby', '_self')
-      }
-    } catch (error) {
-      Swal.fire({
-        title: "ปิดห้องไม่สำเร็จ",
-        text: "",
-        icon: "error",
-        showCancelButton: false,
-        confirmButtonText: 'ตกลง',
-        reverseButtons: true
-      }).then((result) => {
-        if (result.isConfirmed) {
-          if (typePexRTC === '' && window.localStream !== undefined) {
-            window.localStream.getVideoTracks()[0].stop();
-          }
-          window.open(process.env.REACT_APP_REDIRECT_LOBBY + '/redirectlobby', '_self')
-        }
-      });
-    }
-  }
-
+  // Get the device
   useEffect(() => {
-    if (pexRTC.current_service_type === 'conference') {
-      let status = 'On'
-      if (micMute) {
-        status = "Off"
-      } else {
-        status = "On"
-      }
-      createMicHost(status)
-    }
+    getDevice();
+  }, [navigator.mediaDevices.enumerateDevices()])
 
-    // when user reload do this
-    if (performance.navigation.type === performance.navigation.TYPE_RELOAD) {
-      window.open(process.env.REACT_APP_REDIRECT_LOBBY + '/redirectlobby', '_self')
-    }
+  // Get the device
+  async function getDevice() {
+    let devices = await navigator.mediaDevices.enumerateDevices();
+    let video_devices = devices.filter((d) => d.kind === 'videoinput');
+    let audio_devices = devices.filter((d) => d.kind === 'audioinput');
+    setVideoDevices(video_devices);
+    setAudioDevices(audio_devices);
+  }
 
-  }, [pexRTC.current_service_type]);
-
+  // When User reload stream will end session
   useEffect(() => {
-    //When handdle change output
-    if (selectOutput) {
-      setOutput()
-    }
-
-  }, [selectOutput]);
-
-  //Create mic for Host
-  async function createMicHost(mic) {
-    try {
-      const response = await axios({
-        method: "post",
-        url: process.env.REACT_APP_API + '/api/v1/miccheck/create',
-        data: {
-          meeting_id: room_id,
-          uid: pexRTC.uuid,
-          status: mic
-        },
-      });
-      if (response.data.result === "Create") {
-        console.log(response.data.data)
-      }
-    } catch (error) {
-      addmemMicHost(mic)
-    }
-  }
-
-  //Add mem status mic for Host
-  async function addmemMicHost(mic) {
-    try {
-      const response = await axios({
-        method: "post",
-        url: process.env.REACT_APP_API + '/api/v1/miccheck/addmem',
-        data: {
-          meeting_id: room_id,
-          uid: pexRTC.uuid,
-          status: mic
-        },
-      });
-      if (response.data.result === "Create") {
-        console.log(response.data.data)
-      }
-    } catch (error) {
-      console.log(error)
-    }
-  }
+    window.beforeunload = function (event) {
+      return pexRTC.disconnect();
+    };
+  }, [])
 
   // When User close stream will end session
-  window.addEventListener("beforeunload", () => {
-    // axios.delete(process.env.REACT_APP_API + '/api/v1/miccheck/deletemem', {
-    //   meeting_id: room_id,
-    //   uid: pexRTC.uuid,
-    // })
-    pexRTC.disconnect()
-  });
+  useEffect(() => {
+    const handleTabClose = (event) => {
+      event.preventDefault();
+      return pexRTC.disconnect();
+    };
+    window.addEventListener("beforeunload", handleTabClose);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleTabClose);
+    };
+  }, []);
 
   // When the stream source is updated
   useEffect(() => {
-    if (pexipVideoRef.current) {
-      if (!stateSwitchCam) {
-        if (typeof MediaStream !== 'undefined' && streamSrc instanceof MediaStream) {
-          pexipVideoRef.current.srcObject = streamSrc;
-          if (loading) {
-            setInterval(function () { setLoading(false) }, 3000);
-          }
-        } else {
-          pexipVideoRef.current.src = streamSrc;
-          if (loading) {
-            setInterval(function () { setLoading(false) }, 3000);
-          }
-        }
+    if (statePresentation && pexipVideoRef.current) {
+      pexipVideoRef.current.srcObject = streamPresentation;
+      pexipSoundRef.current.srcObject = streamSrc;
+    } else if (pexipVideoRef.current) {
+      if (
+        typeof MediaStream !== 'undefined' &&
+        streamSrc instanceof MediaStream
+      ) {
+        pexipVideoRef.current.srcObject = streamSrc;
+        // pexipSoundRef.current.srcObject = streamSrc;
+        setInterval(function () { setLoading(false) }, 3000);
       } else {
-        if (typeof MediaStream !== 'undefined' && streamCamera instanceof MediaStream) {
-          pexipVideoRef.current.srcObject = streamCamera;
-          if (loading) {
-            setInterval(function () { setLoading(false) }, 3000);
-          }
-        } else {
-          pexipVideoRef.current.src = streamCamera;
-          if (loading) {
-            setInterval(function () { setLoading(false) }, 3000);
-          }
-        }
+        pexipVideoRef.current.src = streamSrc;
+        // pexipSoundRef.current.src = streamSrc;
+        setInterval(function () { setLoading(false) }, 3000);
       }
     }
-    if (audioRef.current) {
-      if (typeof MediaStream !== 'undefined' && streamSrc instanceof MediaStream) {
-        audioRef.current.srcObject = streamSrc
+  }, [statePresentation, streamSrc]);
+
+  // CameraUser
+  useEffect(() => {
+    if (pexipCamera.current) {
+      if (typeof MediaStream !== 'undefined' && streamCamera instanceof MediaStream) {
+        pexipCamera.current.srcObject = streamCamera;
       } else {
-        audioRef.current.src = streamSrc
+        pexipCamera.current.src = streamCamera;
       }
     }
-  }, [streamSrc, streamCamera, stateSwitchCam]);
+  }, [streamCamera]);
+
+  // Setup Device
+  // function callSetupDeive() {
+  //   getMediaDevices(constraints)
+  // }
 
   // This method is called when the call is setting up
   function callSetup(stream, pinStatus) {
     pexRTC.connect(pin);
     setStreamCamera(stream)
+    pexRTC.muteAudio(micMute)
+    pexRTC.muteVideo(vidMute)
   }
+
+  // Get mediaDevices
+  // async function getMediaDevices(constraints) {
+  //   await navigator.mediaDevices.getUserMedia(constraints);
+  // }
 
   // When the call is connected
   function callConnected(stream) {
     setUuid(pexRTC.uuid)
     setCheckRole('HOST')
     setStreamSrc(stream);
+    pexRTC.transformLayout({
+      layout: 'ac',
+      enable_extended_ac: true,
+      enable_active_speaker_indication: true,
+      enable_overlay_text: true,
+    })
   }
 
   // When the call is presentation start 
@@ -397,33 +294,16 @@ function Call(props) {
 
   // get Presentation
   function callSharedScreen(setting, presenter, uuid, presenter_source) {
-    // if (setting && presenter_source === "video") {
-    //   pexRTC.getPresentation()
-    //   setStatePresentation(setting)
-    //   setStatePresentationFile(false)
-    //   pexRTC.onPresentationReload = callPresentationReload;
-    //   setStateCloseConference(false)
-    // } else if (setting && presenter_source === "static") {
-    //   setStatePresentationOutputFIle(setting)
-    //   setStatePresentationFile(false)
-    //   pexRTC.onPresentationReload = callPresentationReload;
-    //   setStateCloseConference(false)
-    // } else {
-    //   setStatePresentationOutputFIle(setting)
-    //   setStatePresentation(setting)
-    //   setStateCloseConference(true)
-    // }
-    // -------------------
-    if (setting) {
-      setStateCloseConference(false)
-      setStatePresentationFile(false)
+    if (setting && presenter_source === "video") {
+      pexRTC.getPresentation()
+      setStatePresentation(setting)
+    } else if (setting && presenter_source === "static") {
+      setStatePresentationOutputFIle(setting)
+      pexRTC.onPresentationReload = callPresentationReload;
     } else {
-      setStateCloseConference(true)
+      setStatePresentationOutputFIle(setting)
+      setStatePresentation(setting)
     }
-    setStatePresentationOutputFIle(setting)
-    setStatePresentation(setting)
-    pexRTC.getPresentation()
-    pexRTC.onPresentationReload = callPresentationReload;
   }
 
   // get Presentation images
@@ -435,8 +315,8 @@ function Call(props) {
   function callPresentationDisconnected(reason) {
     if (reason.status === 'stop') {
       setStatePresentation(false)
-      setIndexOfPage(0)
     }
+    else setStateEndPresentation(reason)
   }
 
   // When the call is error
@@ -446,34 +326,33 @@ function Call(props) {
       text: "",
       icon: "error",
       showCancelButton: false,
-      confirmButtonText: 'ตกลง',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        if (typePexRTC === '' && window.localStream !== undefined) {
-          window.localStream.getVideoTracks()[0].stop();
-        }
-        window.open(process.env.REACT_APP_REDIRECT_LOBBY + '/redirectlobby', '_self')
-      }
+      confirmButtonText: "OK",
+      allowOutsideClick: false,
+    }).then(() => {
+      window.open(process.env.REACT_APP_REDIRECT_LOBBY + '/redirectlobby', '_self')
     });
   }
 
   // When the call is disconnected
-  function callDisconnected(reason = '') {
-    // window.localStream.getVideoTracks()[0].stop();
-    // window.open(process.env.REACT_APP_REDIRECT_LOBBY + '/redirectlobby', '_self')
+  function callDisconnected(reason) {
+    window.open(process.env.REACT_APP_REDIRECT_LOBBY + '/redirectlobby', '_self')
   }
 
-  //When handdle change output
-  async function setOutput() {
-    try {
-      const audio = document.getElementById("audioOutPut");
-      await audio.setSinkId(selectOutput);
-      console.log(`Audio is being played on ${audio.sinkId}`);
-    } catch (err) {
-      setStateOutput(true)
-      console.log(err);
-    }
+
+  // Handle close dialogDevices
+  function handleClose() {
+    setOpenDialog(false);
+  }
+
+  // Select Tap Audio or Video on dialogDevices
+  function toggleTab(value) {
+    setSelectTab(value)
+  }
+
+  // Save Change Devices
+  function saveChanges() {
+    pexRTC.renegotiate(setDeviceTest())
+    handleClose()
   }
 
   return (
@@ -483,34 +362,20 @@ function Call(props) {
         <LoadingView />
       }
 
-      {/* VirtualBackground */}
-      {!detect &&
-        <RunCanvasBG {...props} />
-      }
-
       <DraWer {...props} />
       <Main open={openMessages}>
 
         {/* Presentation File */}
         {(statePresentationFile || statePresentationOutputFIle) &&
           <ImagesPresentation pexRTC={pexRTC} dialURI={dialURI} statePresentationOutputFIle={statePresentationOutputFIle} urlPresentation={urlPresentation}
-            statePresentationFile={statePresentationFile} indexOfPage={indexOfPage} fileImages={fileImages} setIndexOfPage={setIndexOfPage} openMessages={openMessages}
-            listParticipants={listParticipants} typePexRTC={typePexRTC} participantName={participantName} loading={loading} />
-        }
-
-        {/* Presentation*/}
-        {statePresentation &&
-          <VideoPresentation streamPresentation={streamPresentation} statePresentation={statePresentation} quality={quality} urlPresentation={urlPresentation} />
+            statePresentationFile={statePresentationFile} indexOfPage={indexOfPage} fileImages={fileImages} setIndexOfPage={setIndexOfPage} openMessages={openMessages} />
         }
 
         <div className='callContainer'>
-          {(!statePresentationFile || !statePresentation) ? (
-            <video className='callVideoContainer' ref={pexipVideoRef} muted autoPlay='autoplay' playsInline id="conference"></video>
-          ) : (
-            <video className='callVideoContainer' ref={pexipVideoRef} muted autoPlay='autoplay' playsInline></video>
-          )}
-          {/* Audio output */}
-          <audio id="audioOutPut" ref={audioRef} autoPlay='autoPlay' ></audio>
+          <video className='callVideoContainer' ref={pexipVideoRef} autoPlay='autoplay' playsInline id="conference"></video>
+          {statePresentation &&
+            <audio ref={pexipSoundRef} autoPlay='autoplay' id="soundConference"></audio>
+          }
 
           {/* Tool Fucntion */}
           <ToolFunction {...props} />
@@ -522,32 +387,135 @@ function Call(props) {
           <ToolControl {...props} />
 
           {/* Camera User */}
-          <CameraUser
-            streamCamera={streamCamera}
-            streamSrc={streamSrc}
-            micMute={micMute}
-            vidMute={vidMute}
-            stateCloseCamera={stateCloseCamera}
-            setStateCloseCamera={setStateCloseCamera}
-            stateSwitchCam={stateSwitchCam}
-            setStateSwitchCam={setStateSwitchCam}
-            loadingCamera={loadingCamera}
-          />
-
-          {/* conferenceWhenShareScreen */}
-          <ConferenceWhenShareScreen streamSrc={streamSrc} stateCloseConference={stateCloseConference} setStateCloseConference={setStateCloseConference} />
+          <CameraUser {...props} />
 
           {/* Tool OpenCamera */}
           <ToolOpenCamera {...props} />
 
-          {/* ToolOpenConference */}
-          {statePresentation &&
-            <ToolOpenConference stateCloseConference={stateCloseConference} setStateCloseConference={setStateCloseConference} />
-          }
+          {/* DialogSetting */}
+          <div>
+            <BootstrapDialog
+              onClose={() => handleClose()}
+              fullScreen={fullScreen}
+              aria-labelledby="customized-dialog-title"
+              open={openDialog}
+            >
+              <BootstrapDialogTitle id="customized-dialog-title" onClose={() => handleClose()}>
+                การตั้งค่า
+              </BootstrapDialogTitle>
+              <DialogContent dividers>
+                <Box sx={{ mt: 1, minWidth: 500, maxWidth: 500 }}>
+                  {/* <Divider sx={{ position: 'absolute', justifySelf: 'center', height: '100%', m: 1 }} orientation="vertical" />
+                asd */}
+                  <div className={DialogCSS.content}>
+                    <div className={DialogCSS.left}>
+                      {selectTab === "AUDIO" ? (
+                        <Box
+                          sx={{ pr: 0, mr: 5, background: "#E6E6E6", borderRadius: 2 }}
+                          className={`${DialogCSS.leftAudioTab} ${selectTab === "AUDIO" && DialogCSS.tabActive
+                            }`}
+                          onClick={() => {
+                            toggleTab("AUDIO");
+                          }}
+                        >
+                          Audio
+                        </Box>
+                      ) : (
+                        <Box
+                          sx={{ pr: 3 }}
+                          className={`${DialogCSS.leftAudioTab} ${selectTab === "AUDIO" && DialogCSS.tabActive
+                            }`}
+                          onClick={() => {
+                            toggleTab("AUDIO");
+                          }}
+                        >
+                          Audio
+                        </Box>
+                      )}
+                      {selectTab === "VIDEO" ? (
+                        <Box
+                          sx={{ pr: 0, mr: 5, background: "#E6E6E6", borderRadius: 2 }}
+                          className={`${DialogCSS.leftVideoTab} ${selectTab === "VIDEO" && DialogCSS.tabActive
+                            }`}
+                          onClick={() => {
+                            toggleTab("VIDEO");
+                          }}
+                        >
+                          Video
+                        </Box>
+                      ) : (
+                        <Box
+                          sx={{ pr: 3 }}
+                          className={`${DialogCSS.leftVideoTab} ${selectTab === "VIDEO" && DialogCSS.tabActive
+                            }`}
+                          onClick={() => {
+                            toggleTab("VIDEO");
+                          }}
+                        >
+                          Video
+                        </Box>
+                      )}
+                    </div>
+                    <Divider sx={{ height: 'auto', ml: '25px' }} orientation="vertical" />
+                    <div className={`${DialogCSS.right} `}>
+                      {selectTab === "AUDIO" && (
+                        <div className={DialogCSS.rightAudio}>
+                          <FormControl sx={{ mb: 2, minWidth: 120 }}>
+                            <InputLabel id="demo-select-small">Audio</InputLabel>
+                            <Select
+                              labelId="demo-select-small"
+                              id="demo-select-small"
+                              value={selectAudio}
+                              label="Audio"
+                              onChange={handleChangeAudio}
+                            >
+                              {audioDevices.length === 0 ? (
+                                <MenuItem value='loading'>Loading...</MenuItem>
+                              ) : (
+                                audioDevices.map((device, i) => {
+                                  return <MenuItem key={i} value={device.deviceId}>{device.label}</MenuItem>;
+                                })
+                              )}
+                            </Select>
+                          </FormControl>
+                        </div>
+                      )}
+                      {selectTab === "VIDEO" && (
+                        <div className={DialogCSS.rightVideo}>
+                          <FormControl sx={{ mb: 2, minWidth: 120 }}>
+                            <InputLabel id="demo-select-small">Video</InputLabel>
+                            <Select
+                              labelId="demo-select-small"
+                              id="demo-select-small"
+                              value={selectVideo}
+                              label="Video"
+                              onChange={handleChangeVideo}
+                            >
+                              {videoDevices.length === 0 ? (
+                                <MenuItem value='loading'>Loading...</MenuItem>
+                              ) : (
+                                videoDevices.map((device, i) => {
+                                  return <MenuItem key={i} value={device.deviceId}>{device.label}</MenuItem>;
+                                })
+                              )}
+                            </Select>
+                          </FormControl>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Box>
+              </DialogContent>
+              <DialogActions>
+                <Button autoFocus onClick={() => saveChanges()}>
+                  บันทึก
+                </Button>
+              </DialogActions>
+            </BootstrapDialog>
+          </div>
 
         </div>
       </Main>
-
     </Box>
   );
 }

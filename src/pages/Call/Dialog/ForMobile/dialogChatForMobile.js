@@ -66,10 +66,10 @@ function DialogChatForMobile(props) {
         open={openDialogChatForMobile}
         fullScreen={fullScreen}
       >
-        <IconButton sx={{ top: 10, right: 25, position: 'absolute' }} onClick={handleClose}>
+        <IconButton sx={{ top: 5, right: 20, position: 'absolute' }} onClick={handleClose}>
           <CloseIcon />
         </IconButton>
-        <Box sx={{ width: "100%", height: "100vh", pt:6, overflow: "hidden" }}>
+        <Box sx={{ width: "100%", height: "100vh" }}>
           <iframe width="100%" height="100%" src={`${process.env.REACT_APP_HOST_ONECHAT}/chat-plugin/authen?room_id=${room_id}&authen_token=${authen_token}&refresh_token=${refresh_token}`} frameBorder="0"></iframe>
         </Box>
       </BootstrapDialog>

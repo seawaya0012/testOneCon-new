@@ -1,8 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from "axios";
-
-//Component
-import DialogVote from "../Dialog/dialogVote";
 
 //CSS
 import '../Call.scss';
@@ -10,7 +7,6 @@ import ButtonCSS from '../CSS/zoom.module.scss';
 
 //Library
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { createTheme, ThemeProvider } from '@mui/material/styles';
 import Swal from "sweetalert2/dist/sweetalert2.js";
 import { styled, useTheme } from '@mui/material/styles';
 import SwipeableViews from 'react-swipeable-views';
@@ -31,13 +27,13 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  useMediaQuery,
-  Badge,
-  Paper
+  useMediaQuery
 } from '@mui/material';
 
 //Icon
-import PhoneDisabledIcon from '@mui/icons-material/PhoneDisabled';
+import {
+  faHand,
+} from '@fortawesome/free-solid-svg-icons';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import MicIcon from '@mui/icons-material/Mic';
@@ -48,35 +44,13 @@ import MonitorIcon from '@mui/icons-material/Monitor';
 import PanToolIcon from '@mui/icons-material/PanTool';
 import CampaignIcon from '@mui/icons-material/Campaign';
 import CallEndIcon from '@mui/icons-material/CallEnd';
-import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
+import PollIcon from '@mui/icons-material/Poll';
 import KeyIcon from '@mui/icons-material/Key';
 import KeyOffIcon from '@mui/icons-material/KeyOff';
 import { FaCrown } from 'react-icons/fa';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import { flexbox } from '@mui/system';
-
-var CryptoJS = require("crypto-js");
-
-const THEME = createTheme({
-  typography: {
-    "fontFamily": `"Kanit", sans-serif`,
-    "fontSize": 14,
-    "fontWeightLight": 300,
-    "fontWeightRegular": 400,
-    "fontWeightMedium": 500
-  }
-});
-
-const BOLD = createTheme({
-  typography: {
-    "fontFamily": `"Kanit", sans-serif`,
-    "fontSize": 14,
-    "fontWeightLight": 400,
-    "fontWeightRegular": 600,
-    "fontWeightMedium": 700
-  }
-});
 
 //Dialog
 function BootstrapDialogTitle(props) {
@@ -116,20 +90,6 @@ BootstrapDialogTitle.propTypes = {
 const drawerWidth = 330;
 
 const DrawerHeader = styled('div')(({ theme }) => ({
-  backgroundColor: 'white',
-  // position: 'absolute',
-  // right: 25,
-  // top: 0,
-  width: '80%',
-  display: 'flex',
-  alignItems: 'center',
-  padding: theme.spacing(0, 1),
-  ...theme.mixins.toolbar,
-  justifyContent: 'space-between',
-}));
-
-const DrawerHeader1 = styled('div')(({ theme }) => ({
-  backgroundColor: 'white',
   position: 'absolute',
   right: 25,
   top: 0,
@@ -179,89 +139,36 @@ const TextWrapper = styled(Typography)(({ theme }) => ({
   wordBreak: "break-word",
 }))
 
-const InputChatBox = styled(Paper)(({ theme }) => ({
+const InputChatBox = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   width: '100%',
-  backgroundColor: "#FFFFFF",
-  height: 'auto'
+  background: "#FFFFFF",
 }))
 
-const LongText = ({ content, limit }) => {
-  if (content.length <= 16) {
-    return <div>
-      <ThemeProvider theme={THEME}>
-        <Typography>{content}</Typography>
-      </ThemeProvider>
-    </div>
-  }
-  const toShow = content.substring(0, 16) + "...";
-  return <div>
-    <ThemeProvider theme={THEME}>
-      <Typography>{toShow}</Typography>
-    </ThemeProvider>
-  </div>
-}
-
 function DraWer(props) {
-  const {
-    pexRTC,
-    openMessages,
-    setOpenMessages,
-    valueIndexOfDrawer,
-    setValueIndexOfDrawer,
-    guestLink,
-    countParticipants,
-    setCountParticipants,
-    listParticipants,
-    setListParticipants,
-    room_id,
-    authen_token,
-    refresh_token,
-    stateMic,
-    setStateMic,
-    accessToken,
-    stateVote,
-    conferenceUpdate,
-    setConferenceUpdate,
-    openDialogPartiForMobile,
-    setOpenDialogPartiForMobile,
-    openDialogVote,
-    setOpenDialogVote,
-    meetID,
-    setStateVoteGuest,
-    vote,
-    one_id,
-    setStateCheckGuestLogin,
-    setStateCheckAuthority,
-    checkRole,
-    participantName,
-    setCountBuzz,
-    voteSecret
-  } = props
+  const { pexRTC, dialURI, openMessages, setOpenMessages, valueIndexOfDrawer, setValueIndexOfDrawer, countParticipants, setCountParticipants, listParticipants,
+    setListParticipants, room_id, authen_token, refresh_token, checkRole, uuid, accessToken, stateVote, conferenceUpdate, setConferenceUpdate,
+    openDialogPartiForMobile, setOpenDialogPartiForMobile } = props
+  const [stateSpeakers, setStateSpeakers] = useState(null)
   const theme = useTheme();
-  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
+  // const [conferenceUpdate, setConferenceUpdate] = useState(null) ย้ายไปประกาศบน app
 
   // ค้นหาผู้เข้าร่วมประชุม
   const [findParticipants, setFindParticipants] = useState('')
 
-  //Function buzz
-  const [buzzState, setBuzzState] = useState([])
-
   //ประกาศ
   const [Messages, setMessages] = useState("")
   const [typeMessages, setTypeMessages] = useState("3")
+  const [vote, setVote] = useState("")
+  const [typeVote, setTypeVote] = useState("2")
 
   //state Active Speakers
   const [stateActiveSpeakers, setStateActiveSpeakers] = useState(null)
   const [checkParticipant, setCheckParticipant] = useState(null)
 
   // voteSystem
-  const [jwtOneChat, setJwtOneChat] = useState('');
   const [countVoteSystem, setCountVoteSystem] = useState(0);
-  const [uuidVote, setUuidVote] = useState(0);
-  const [dataVote, setDataVote] = useState(null)
-  const typeLoginVote = useRef('')
 
   const handleDrawerClose = () => {
     setOpenMessages(false);
@@ -272,6 +179,7 @@ function DraWer(props) {
   };
 
   //Dialog
+  const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
   const handleClose = () => {
     setOpenDialogPartiForMobile(false);
   };
@@ -279,44 +187,64 @@ function DraWer(props) {
   useEffect(() => {
     pexRTC.onStageUpdate = callActiveSpeakers;
     pexRTC.onRosterList = CallonRosterList;
-    // pexRTC.onParticipantUpdate = CallonParticipantUpdate;
     pexRTC.onConferenceUpdate = CallonConferenceUpdate;
     pexRTC.onChatMessage = ChatMessage;
-    getAllMemMic()
+    // pexRTC.onParticipantDelete = findMember;
 
-  }, [countVoteSystem, stateVote, voteSecret, vote]);
+    //set stateVote in useEffect for active stateVote in function CallonRosterList open Vote
+  }, [stateVote]);
+
+  //kick member in onechat by host
+  // function findMember(participant) {
+  //   console.log('findMember', authen_token)
+  //   if (participant !== null) {
+  //     axios.get(process.env.REACT_APP_HOST_ONECHAT + "/backend/api/v1/member/list",
+  //       {
+  //         headers: { Authorization: `Bearer ${authen_token}` }
+  //       }).then((result) => {
+  //         const data = result.data.data
+  //         // console.log(data?.find(data => data?.member_id !== participant.uuid)?.id)
+  //         deleteMember(data?.find(data => data?.member_id === participant.uuid)?.id)
+  //       })
+  //       .catch((err) => {
+  //         console.log('result', err)
+  //       })
+  //   }
+  // }
+
+  // function deleteMember(id) {
+  //   console.log(id)
+  //   axios.delete(process.env.REACT_APP_HOST_ONECHAT + "/backend/api/v1/member/kick", {
+  //     user_id: id
+  //   },{
+  //     headers: { Authorization: `Bearer ${authen_token}` }
+  //   }).then((result) => {
+  //     const data = result.data.data
+  //     console.log('result', data)
+  //   })
+  //     .catch((err) => {
+  //       console.log('result', err)
+  //     })
+  // }
 
   // List Participant
   function CallonRosterList(roster) {
-    // console.log(roster)
-    const count = roster?.filter(user => user?.call_direction !== "out" && user?.service_type !== "waiting_room")
-    setCountParticipants(count?.length)
+    console.log(roster)
+    setCountParticipants(roster.length)
     setListParticipants(roster)
 
-    //Set and Sorted Buzz time
-    const countBuzz = roster?.filter(user => user.buzz_time !== 0)
-    setCountBuzz(countBuzz?.length)
-    setBuzzState(countBuzz?.sort((a, b) => a.buzz_time - b.buzz_time))
-
     // update ให้คนที่เข้าที่หลัง สมารถเห็น Vote ได้่
-    if (checkRole === 'HOST' && count?.length > countVoteSystem) {
-      if (stateVote === true && !voteSecret) {
+    if (pexRTC.role === 'HOST' && roster.length > countVoteSystem) {
+      if (stateVote === true) {
         pexRTC.sendChatMessage('1|&topic-id=' + vote)
+      } else {
+        pexRTC.sendChatMessage('2')
       }
-      setCountVoteSystem(count?.length)
+      setCountVoteSystem(roster.length)
     } else {
-      setCountVoteSystem(count?.length)
+      setCountVoteSystem(roster.length)
     }
   }
-
-  // participants update buzz
-  // function CallonParticipantUpdate(participant) {
-  //   if (participant.buzz_time !== 0 && buzzState?.find(user => user?.uuid === participant.uuid) === undefined) {
-  //     setBuzzState(buzzState => [...buzzState, participant]);
-  //   } else if (participant.buzz_time === 0) {
-  //     setBuzzState(buzzState?.filter(user => user?.uuid !== participant.uuid))
-  //   }
-  // }
 
   // ConferenceUpdate
   function CallonConferenceUpdate(properties) {
@@ -326,145 +254,18 @@ function DraWer(props) {
 
   //รับ Message จาก RTC มาแสดง
   function ChatMessage(message) {
-    //Vote System
-    if (message.payload.charAt(0) === '1' || message.payload.charAt(0) === '6' || message.payload.charAt(0) === '2' || message.payload.charAt(0) === '7') {
-      //active เมื่อ host สั่งเปิดให้ทำ Vote ได้
-      if (message.payload.charAt(0) === '1') {
-        setStateVoteGuest(true)
-        getSharedToken(message.payload.substring(12))
-        //active เมื่อ host สั่งเปิดให้ทำ Vote ลับ type 6
-      } else if (message.payload.charAt(0) === '6') {
-        const substrings = message.payload.split('*');
-        if (substrings[1] === pexRTC.uuid) {
-          setStateVoteGuest(true)
-          getSharedToken(message.payload.substring(12).split('*')[0])
-        }
-        // ปิดโหวตสำหรับ โหวตลับ type 7
-      } else if (message.payload.charAt(0) === '7') {
-        if (message.payload.substring(2) === pexRTC.uuid) {
-          setStateVoteGuest(false)
-        }
-        // ปิดโหวต type 2
-      } else if (message.payload.charAt(0) === '2') {
-        setStateVoteGuest(false)
-      }
-      //Announce
-    } else if (message.payload.charAt(0) === '0') {
+    if (message.payload.charAt(0) === '1' || message.payload.charAt(0) === '2') {
+      setTypeVote(message.payload.charAt(0))
+      setVote(message.payload.substring(2))
+    } else {
       setTypeMessages(message.payload.charAt(0))
       setMessages(message.payload.substring(2))
-      //Status Mic
-    } else if (message.payload.charAt(0) === '4') {
-      getAllMemMic()
-    }
-  }
-
-  //Get Data Vote
-  async function getData(uuidVote, jwt) {
-    try {
-      const response = await axios({
-        method: "get",
-        url: process.env.REACT_APP_HOST_VOTE_SYSTEM + '/api/v1/voting-topic/list/byid?id=' + uuidVote,
-        headers: { Authorization: `Bearer ${jwt}` },
-      });
-      var checkSecret = false
-      if (response.data.message === "OK") {
-        if (response.data.result.topic_type === "Private") {
-          for (let i = 0; i < response.data.result.voting_users_data.length; i++) {
-            if (one_id === response.data.result.voting_users_data[i].user_id) {
-              checkSecret = true
-              break;
-            }
-          }
-          if (checkSecret === true) {
-            setDataVote(response.data.result)
-            setUuidVote(uuidVote)
-            setJwtOneChat(jwt)
-            checkSecret = false
-          } else {
-            setStateCheckAuthority(true)
-          }
-        } else if (response.data.result.topic_type === "OneConference") {
-          if (typeLoginVote.current === "Login") {
-            getJWTOneChatGuest(uuidVote)
-          } else {
-            setStateCheckAuthority(false)
-            setDataVote(response.data.result)
-            setUuidVote(uuidVote)
-            setJwtOneChat(jwt)
-          }
-        } else if (response.data.result.topic_type === "OneConference_Private") {
-          if (typeLoginVote.current === "Login") {
-            getJWTOneChatGuest(uuidVote)
-          } else {
-            setStateCheckAuthority(false)
-            setDataVote(response.data.result)
-            setUuidVote(uuidVote)
-            setJwtOneChat(jwt)
-          }
-        } else {
-          setStateCheckAuthority(false)
-          setDataVote(response.data.result)
-          setUuidVote(uuidVote)
-          setJwtOneChat(jwt)
-        }
-      }
-    } catch (error) {
-      console.log(error)
-    }
-  }
-  async function getSharedToken(uuidVote) {
-    await axios.get(process.env.REACT_APP_ONEID + '/api/v2/service/shared-token',
-      {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      })
-      .then((result) => {
-        const data = result.data.data.shared_token
-        getJWTOneChat(uuidVote, data)
-      })
-      .catch((err) => {
-        getJWTOneChatGuest(uuidVote)
-      })
-  }
-  async function getJWTOneChatGuest(uuidVote) {
-    try {
-      const response = await axios({
-        method: "post",
-        url: process.env.REACT_APP_HOST_VOTE_SYSTEM + '/api/v1/login/user/blockchain_scoring/guest',
-        data: {
-          name: participantName.substring(0, participantName.indexOf(" ")),
-          surname: participantName.substring(participantName.indexOf(" ") + 1),
-          topic_id: uuidVote,
-          user_id: pexRTC.uuid
-        }
-      });
-      if (response.data.message === "OK") {
-        typeLoginVote.current = 'Guest'
-        getData(uuidVote, response.data.result.jwt)
-        setStateCheckGuestLogin(false)
-      }
-    } catch (error) {
-      console.log(error)
-      setStateCheckGuestLogin(true)
-    }
-  }
-  async function getJWTOneChat(uuidVote, data) {
-    try {
-      const response = await axios({
-        method: "get",
-        url: process.env.REACT_APP_HOST_VOTE_SYSTEM + '/api/v1/login/user/blockchain_scoring/shared-token?shared_token=' + data
-      });
-      if (response.data.message === "OK") {
-        // setJwtOneChat(response.data.result.jwt)
-        typeLoginVote.current = 'Login'
-        getData(uuidVote, response.data.result.jwt)
-      }
-    } catch (error) {
-      console.log(error)
     }
   }
 
   // state Speaker Participant
   function callActiveSpeakers(stage) {
+    setStateSpeakers(stage)
     setStateActiveSpeakers(stage[0]?.vad)
     setCheckParticipant(stage[0]?.participant_uuid)
   }
@@ -472,23 +273,6 @@ function DraWer(props) {
   //disconnectParticipant By Host
   function disconnectParticipant(uuid) {
     pexRTC.disconnectParticipant(uuid)
-  }
-
-  function disconnectAllParticipant() {
-    setOpenDialogPartiForMobile(false);
-    Swal.fire({
-      title: 'บังคับทุกคนให้ออกจากห้อง',
-      text: "",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: 'ตกลง',
-      cancelButtonText: 'ยกเลิก',
-      reverseButtons: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        pexRTC.disconnectAll();
-      }
-    });
   }
 
   //MutePresentation Guest By Host
@@ -535,55 +319,40 @@ function DraWer(props) {
     pexRTC.setParticipantSpotlight(uuid, setting)
   }
 
-  function requestToken(uuid) {
-    // console.log('refresh token', pexRTC.token)
+  function requestToken() {
+    console.log('refresh token', pexRTC.token)
     console.log('uuid', pexRTC.uuid)
-    // console.log('meetID', meetID)
-    // console.log(guestLink);
-    // console.log(participantName.substring(participantName.indexOf(" ") + 1));
-    // console.log(participantName.split(" ")[1])
-    // console.log('version', pexRTC.version)
-    const text = '5|uuid|asdasd|asdasd|asdsada|3'
-    console.log(text.substring(4));
   }
 
-  //Find Participants
+  //open Vote System
+  async function openVote() {
+    await axios.get(process.env.REACT_APP_ONEID + '/api/v2/service/shared-token',
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      })
+      .then((result) => {
+        const data = result.data.data.shared_token
+        const dataVote = vote
+        console.log('data shared_token', data)
+        window.open(process.env.REACT_APP_HOST_VOTE_SYSTEM + '/?shared-token=' + data + '' + dataVote, '_blank');
+      })
+      .catch((err) => {
+        console.log('error', err)
+        Swal.fire({
+          title: "กรุณาล็อกอินและเปิดใช้งานระบบโหวตก่อนใช้งานระบบโหวต",
+          text: "",
+          icon: "error",
+          showCancelButton: false,
+          confirmButtonText: "OK",
+          allowOutsideClick: false,
+        });
+      })
+  }
+
+  //ส่ง Message ไปยัง RTC
   const handleFindParti = (event) => {
     setFindParticipants(event.target.value)
   };
-
-  //get allmem status mic
-  async function getAllMemMic() {
-    try {
-      const response = await axios({
-        method: "post",
-        url: process.env.REACT_APP_API + '/api/v1/miccheck/getalldata',
-        data: {
-          meeting_id: room_id,
-        },
-      });
-      if (response.data.message === "Get data success.") {
-        const data = JSON.parse(decodeJS(response.data.data))
-        setStateMic(data.member)
-      }
-    } catch (error) {
-      console.log(error)
-    }
-  }
-
-  function decodeJS(data) {
-    try {
-      var bytes = CryptoJS.AES.decrypt(
-        data,
-        process.env.REACT_APP_SECRET_KEY
-      )
-      var decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8))
-      return decryptedData
-    } catch (error) {
-      console.log('>>>>>>>>', error)
-      return error
-    }
-  }
 
   return (
     <Box>
@@ -601,48 +370,38 @@ function DraWer(props) {
         anchor="left"
         open={openMessages}
       >
-        {/* Headder */}
-        {valueIndexOfDrawer === 0 &&
-          <DrawerHeader>
-            <SwipeableViews
-              axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
-              index={valueIndexOfDrawer}
-              onChangeIndex={handleChangeIndex}
-            >
-              <TabPanel value={valueIndexOfDrawer} index={0} dir={theme.direction} sx={{ height: "100%", border: "1px solid blue" }}>
-                Participants
-              </TabPanel>
-              <TabPanel value={valueIndexOfDrawer} index={1} dir={theme.direction} sx={{ height: "100%", border: "1px solid blue" }}>
-                Chat
-              </TabPanel>
-            </SwipeableViews>
-            <IconButton sx={{ right: 20, position: 'absolute' }} onClick={handleDrawerClose}>
-              {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </IconButton>
-          </DrawerHeader>
-        }
-        {valueIndexOfDrawer === 1 &&
-          <DrawerHeader1>
-            <SwipeableViews
-              axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
-              index={valueIndexOfDrawer}
-              onChangeIndex={handleChangeIndex}
-            >
-              <TabPanel value={valueIndexOfDrawer} index={0} dir={theme.direction} sx={{ height: "100%", border: "1px solid blue" }}>
-                Participants
-              </TabPanel>
-              {/* <TabPanel value={valueIndexOfDrawer} index={1} dir={theme.direction} sx={{ height: "100%", border: "1px solid blue" }}>
-                Chat
-              </TabPanel> */}
-            </SwipeableViews>
-            <IconButton sx={{ right: 0, position: 'absolute' }} onClick={handleDrawerClose}>
-              {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-            </IconButton>
-          </DrawerHeader1>
-        }
-
+        <DrawerHeader>
+          <SwipeableViews
+            axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'}
+            index={valueIndexOfDrawer}
+            onChangeIndex={handleChangeIndex}
+          >
+            <TabPanel value={valueIndexOfDrawer} index={0} dir={theme.direction} sx={{ height: "100%", border: "1px solid blue" }}>
+              Participants
+            </TabPanel>
+          </SwipeableViews>
+          <IconButton sx={{ right: 0, position: 'absolute' }} onClick={handleDrawerClose}>
+            {theme.direction === 'ltr' ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+          </IconButton>
+        </DrawerHeader>
         <TabPanel value={valueIndexOfDrawer} index={0} style={{ overflow: "auto" }}>
-          <Box sx={{ overflow: 'auto' }} >
+
+          {/* find Participants */}
+          <InputChatBox sx={{ boxShadow: 5, position: 'absolute', bottom: 0 }}>
+            <InputBase
+              sx={{ ml: 1, flex: 1 }}
+              placeholder="Search Participants..."
+              inputProps={{ 'aria-label': 'Search Participants...' }}
+              value={findParticipants}
+              onChange={handleFindParti}
+            />
+            <Divider sx={{ height: 30, m: 0.5 }} orientation="vertical" />
+            <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
+              <SearchIcon />
+            </IconButton>
+          </InputChatBox>
+
+          <Box sx={{ overflow: 'auto', pt: 8 }} >
             <Divider />
 
             {/* ประกาศ */}
@@ -663,374 +422,141 @@ function DraWer(props) {
               </Box>
             }
 
+            {/* โหวต */}
+            {typeVote !== '2' &&
+              <Box>
+                {typeVote === '1' &&
+                  <Box sx={{ mx: 2, my: 2, px: 1 }}>
+                    <Button
+                      sx={{ boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 15px', justifyItems: 'center' }}
+                      fullWidth
+                      onClick={() => openVote()}
+                      color="primary"
+                      endIcon={<PollIcon />
+                      }>โหวต</Button>
+                  </Box>
+                }
+                <Divider />
+              </Box>
+            }
+
             {/* ฟังก์ชั่น Buzz */}
-            {buzzState?.map((name, i) => (
+            {listParticipants?.map((name, i) => (
               <Box key={i}>
-                <PopupState variant="popover" popupId="demo-popup-menu">
-                  {(popupState) => (
-                    <React.Fragment>
-                      <MenuItem {...bindTrigger(popupState)} divider sx={{ justifyContent: 'space-between' }}>
-                        <ThemeProvider theme={THEME}>
-                          <LongText content={name.display_name} limit={18} />
-                        </ThemeProvider>
-                        <Box sx={{ pl: 1 }}>
-
-                          <Tooltip title="เอามือลง">
-                            <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation">
-                              <PanToolIcon sx={{ fontSize: 20 }} />
-                            </IconButton>
-                          </Tooltip>
-
-                          {/* ฟังก์ชั่นของ Presentation */}
-                          {name.is_presenting === "YES" &&
-                            <Tooltip title="presentation">
-                              <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation">
-                                <MonitorIcon sx={{ fontSize: 20 }} />
-                              </IconButton>
-                            </Tooltip>
-                          }
-
-                          {/* ฟังก์ชั่นของ Audio */}
-                          {checkParticipant === name.uuid && stateActiveSpeakers === 100 && name.is_muted === "NO" &&
-                            <Tooltip title="Active Microphone">
-                              <IconButton color="error" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                <MicIcon sx={{ fontSize: 20 }} className={ButtonCSS.blob} />
-                              </IconButton>
-                            </Tooltip>
-                          }
-                          {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
-                            <Tooltip title="Microphone">
-                              <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                <MicIcon sx={{ fontSize: 20 }} />
-                              </IconButton>
-                            </Tooltip>
-                          }
-                          {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                            <Tooltip title="Mute">
-                              <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                <MicOffIcon sx={{ fontSize: 20 }} />
-                              </IconButton>
-                            </Tooltip>
-                          }
-                          {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
-                            <Tooltip title="Microphone">
-                              <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                <MicIcon sx={{ fontSize: 20 }} />
-                              </IconButton>
-                            </Tooltip>
-                          }
-                          {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                            <Tooltip title="Mute">
-                              <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                <MicOffIcon sx={{ fontSize: 20 }} />
-                              </IconButton>
-                            </Tooltip>
-                          }
-                          {name.is_muted === "YES" &&
-                            <Tooltip title="Mute by HOST">
-                              <IconButton color="default" sx={{ mx: 0 }} aria-label="MuteMucrophone">
-                                <Badge color="error" badgeContent={<CloseIcon sx={{ fontSize: 9 }} />}>
-                                  <MicIcon sx={{ fontSize: 20 }} />
-                                </Badge>
-                              </IconButton>
-                            </Tooltip>
-                          }
-
-                          {/* ฟังก์ชั่นของ Video */}
-                          {name.is_video_call === 'YES' && name.is_video_muted &&
-                            <Tooltip title="Close Camera">
-                              <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera">
-                                <VideocamOffIcon sx={{ fontSize: 20 }} />
-                              </IconButton>
-                            </Tooltip>
-                          }
-                          {name.is_video_call === 'YES' && !name.is_video_muted &&
-                            <Tooltip title="Camera">
-                              <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera">
-                                <VideocamIcon sx={{ fontSize: 20 }} />
-                              </IconButton>
-                            </Tooltip>
-                          }
-
-                        </Box>
-                      </MenuItem>
-                      {pexRTC.role === 'HOST' &&
-                        <Menu {...bindMenu(popupState)}>
-                          <MenuItem onClick={() => muteBuzzParticipant(name.uuid)}><PanToolIcon sx={{ mr: 1 }} />
-                            <ThemeProvider theme={BOLD}>
-                              <Typography>เอามือลง</Typography>
-                            </ThemeProvider>
-                          </MenuItem>
-                          <MenuItem onClick={() => clearAllBuzzParticipant()}><PanToolIcon color="error" sx={{ mr: 1 }} />
-                            <ThemeProvider theme={BOLD}>
-                              <Typography>เอามือลงทั้งหมด</Typography>
-                            </ThemeProvider>
-                          </MenuItem>
-                          {name.is_muted === "NO" &&
-                            <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>บังคับปิดไมค์</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          }
-                          {name.is_muted === "YES" &&
-                            <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>ยกเลิกปิดไมค์</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          }
-                          {name.is_video_muted === false &&
-                            <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>บังคับปิดกล้อง</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          }
-                          {conferenceUpdate?.guests_muted === false &&
-                            <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>ปิดไมค์ทุกคน</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          }
-                          {conferenceUpdate?.guests_muted === true &&
-                            <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>ยกเลิกปิดไมค์ทุกคน</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          }
-                          {name.spotlight === 0 ? (
-                            <MenuItem onClick={() => setSpotlight(name?.uuid, true)}><RecordVoiceOverIcon sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>สปอร์ตไลท์</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          ) : (
-                            <MenuItem onClick={() => setSpotlight(name?.uuid, false)}><RecordVoiceOverIcon color="error" sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>ยกเลิกสปอร์ตไลท์</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          )}
-                          {name.role === "guest" &&
-                            <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>มอบสิทธิ์โฮสต์</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          }
-                          {name.role === "chair" && checkRole === "HOST" && pexRTC.uuid !== name.uuid &&
-                            <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>ถอนสิทธิ์โฮสต์</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          }
-                          {name?.uuid !== pexRTC.uuid &&
-                            <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>บังคับออกจากห้อง</Typography>
-                              </ThemeProvider>
-                            </MenuItem>
-                          }
-                          {/* <MenuItem onClick={() => disconnectAllParticipant()}><PhoneDisabledIcon color="error" sx={{ mr: 1 }} />
-                              <ThemeProvider theme={BOLD}>
-                                <Typography>บังคับทุกคนออกจากห้อง</Typography>
-                              </ThemeProvider>
-                            </MenuItem> */}
-                        </Menu>
-                      }
-                    </React.Fragment>
-                  )}
-                </PopupState>
+                {name.buzz_time !== 0 &&
+                  <MenuItem divider sx={{ justifyContent: 'space-between' }}>
+                    <Typography>{name.display_name}</Typography>
+                    <Tooltip title="เอามือลง">
+                      <IconButton color="default" sx={{ mx: 3 }} aria-label="presentation" onClick={() => muteBuzzParticipant(name.uuid)}>
+                        <PanToolIcon />
+                      </IconButton>
+                    </Tooltip>
+                  </MenuItem>
+                }
               </Box>
             ))}
 
             {/* ผู้เข้าร่วมประชุม */}
             {findParticipants !== '' ? (
-              <div>
+              <Box>
                 {listParticipants?.filter((paticipant) => paticipant.display_name.toLowerCase().includes(findParticipants.toLowerCase()))?.map((name, i) =>
                   <Box key={i}>
-                    {name.buzz_time === 0 && name.call_direction !== "out" && name.service_type !== "waiting_room" &&
+                    {name.buzz_time === 0 && name.protocol !== "rtmp" &&
                       <PopupState variant="popover" popupId="demo-popup-menu">
                         {(popupState) => (
                           <React.Fragment>
                             <MenuItem {...bindTrigger(popupState)} divider sx={{ justifyContent: 'space-between' }}>
                               <Box>
-                                <ThemeProvider theme={THEME}>
-                                  <LongText content={name.display_name} limit={18} />
-                                </ThemeProvider>
+                                <Typography>{name.display_name}</Typography>
                               </Box>
 
                               <Box sx={{ pl: 1 }}>
 
                                 {/* สถานะ Host */}
                                 {name.role === "chair" &&
-                                  <Tooltip title="HOST">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="HOST">
-                                      <FaCrown size={20} />
-                                    </IconButton>
-                                  </Tooltip>
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="HOST">
+                                    <FaCrown />
+                                  </IconButton>
                                 }
 
                                 {/* ฟังก์ชั่นของ Presentation */}
                                 {name.is_presenting === "YES" &&
-                                  <Tooltip title="presentation">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation">
-                                      <MonitorIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation">
+                                    {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation" onClick={() => mutePresentationParticipant(name.uuid, false)}> */}
+                                    <MonitorIcon />
+                                  </IconButton>
                                 }
 
                                 {/* ฟังก์ชั่นของ Audio */}
                                 {checkParticipant === name.uuid && stateActiveSpeakers === 100 && name.is_muted === "NO" &&
-                                  <Tooltip title="Active Microphone">
-                                    <IconButton color="error" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                      <MicIcon sx={{ fontSize: 20 }} className={ButtonCSS.blob} />
-                                    </IconButton>
-                                  </Tooltip>
+                                  <IconButton color="error" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
+                                    <MicIcon className={ButtonCSS.blob} />
+                                  </IconButton>
                                 }
-                                {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
-                                  <Tooltip title="Microphone">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                      <MicIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
+                                {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" &&
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
+                                    <MicIcon />
+                                  </IconButton>
                                 }
-                                {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                  <Tooltip title="Mute">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                      <MicOffIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                }
-                                {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
-                                  <Tooltip title="Microphone">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                      <MicIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                }
-                                {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                  <Tooltip title="Mute">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                      <MicOffIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
+                                {checkParticipant !== name.uuid && name?.is_muted === "NO" &&
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
+                                    <MicIcon />
+                                  </IconButton>
                                 }
                                 {name.is_muted === "YES" &&
-                                  <Tooltip title="Mute by HOST">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="MuteMucrophone">
-                                      <Badge color="error" badgeContent={<CloseIcon sx={{ fontSize: 9 }} />}>
-                                        <MicIcon sx={{ fontSize: 20 }} />
-                                      </Badge>
-                                    </IconButton>
-                                  </Tooltip>
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="MuteMucrophone">
+                                    <MicOffIcon />
+                                  </IconButton>
                                 }
 
                                 {/* ฟังก์ชั่นของ Video */}
-                                {name.is_video_call === 'YES' && name.is_video_muted &&
-                                  <Tooltip title="Close Camera">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera">
-                                      <VideocamOffIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                }
-                                {name.is_video_call === 'YES' && !name.is_video_muted &&
-                                  <Tooltip title="Camera">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera">
-                                      <VideocamIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                }
+                                {name.is_video_muted ? (
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera">
+                                    {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera" onClick={() => muteVideoParticipant(name.uuid, false)}> */}
+                                    <VideocamOffIcon />
+                                  </IconButton>
+                                ) : (
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera">
+                                    {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera" onClick={() => muteVideoParticipant(name.uuid, true)}> */}
+                                    <VideocamIcon />
+                                  </IconButton>
+                                )}
                               </Box>
 
                             </MenuItem>
                             {pexRTC.role === 'HOST' &&
                               <Menu {...bindMenu(popupState)}>
+                                <MenuItem onClick={() => clearAllBuzzParticipant()}><PanToolIcon sx={{ mr: 1 }} />เอามือลงทั้งหมด</MenuItem>
                                 {name.is_muted === "NO" &&
-                                  <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับปิดไมค์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} /> ปิดไมค์</MenuItem>
                                 }
                                 {name.is_muted === "YES" &&
-                                  <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ยกเลิกปิดไมค์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} /> เปิดไมค์</MenuItem>
                                 }
                                 {name.is_video_muted === false &&
-                                  <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับปิดกล้อง</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} /> ปิดกล้อง</MenuItem>
                                 }
-                                {/* {name.is_video_muted === true &&
-                                <MenuItem onClick={() => muteVideoParticipant(name.uuid, false)}><VideocamOffIcon sx={{ mr: 1 }} /> เปิดกล้อง</MenuItem>
-                              } */}
-                                {/* {name.is_presenting === "YES" &&
-                                <MenuItem onClick={() => mutePresentationParticipant(name.uuid, false)}>ปิดแชร์หน้าจอ</MenuItem>
-                              } */}
+                                {name.is_video_muted === true &&
+                                  <MenuItem onClick={() => muteVideoParticipant(name.uuid, false)}><VideocamOffIcon sx={{ mr: 1 }} /> เปิดกล้อง</MenuItem>
+                                }
+                                {name.is_presenting === "YES" &&
+                                  <MenuItem onClick={() => mutePresentationParticipant(name.uuid, false)}>ปิดแชร์หน้าจอ</MenuItem>
+                                }
                                 {conferenceUpdate?.guests_muted === false &&
-                                  <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ปิดไมค์ทุกคน</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} /> ปิดไมค์ทุกคน</MenuItem>
                                 }
                                 {conferenceUpdate?.guests_muted === true &&
-                                  <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ยกเลิกปิดไมค์ทุกคน</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} /> เปิดไมค์ทุกคน</MenuItem>
                                 }
-                                {name.spotlight === 0 ? (
-                                  <MenuItem onClick={() => setSpotlight(name?.uuid, true)}><RecordVoiceOverIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>สปอร์ตไลท์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
-                                ) : (
-                                  <MenuItem onClick={() => setSpotlight(name?.uuid, false)}><RecordVoiceOverIcon color="error" sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ยกเลิกสปอร์ตไลท์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
-                                )}
+                                {/* <MenuItem onClick={() => setSpotlight(name?.uuid, true)}>Spotlight</MenuItem> */}
                                 {name.role === "guest" &&
-                                  <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>มอบสิทธิ์โฮสต์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} /> มอบสิทธิ์โฮสต์</MenuItem>
                                 }
-                                {name.role === "chair" && checkRole === "HOST" && pexRTC.uuid !== name.uuid &&
-                                  <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ถอนสิทธิ์โฮสต์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                {name.role === "chair" && pexRTC.uuid !== name.uuid &&
+                                  <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} /> ถอนสิทธิ์โฮสต์</MenuItem>
                                 }
                                 {/* <MenuItem onClick={() => requestToken()}><KeyIcon sx={{ mr: 1 }} /> ทดสอบการขอ token</MenuItem> */}
-                                {name?.uuid !== pexRTC.uuid &&
-                                  <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับออกจากห้อง</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
-                                }
-                                {/* <MenuItem onClick={() => disconnectAllParticipant()}><PhoneDisabledIcon color="error" sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>บังคับทุกคนออกจากห้อง</Typography>
-                                  </ThemeProvider>
-                                </MenuItem> */}
+                                <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} /> บังคับออกจากห้อง</MenuItem>
                               </Menu>
                             }
                           </React.Fragment>
@@ -1039,190 +565,116 @@ function DraWer(props) {
                     }
                   </Box>
                 )}
-              </div>
+              </Box>
             ) : (
-              <div>
+              <Box>
                 {listParticipants?.map((name, i) => (
                   <Box key={i}>
-                    {name.buzz_time === 0 && name.call_direction !== "out" && name.service_type !== "waiting_room" &&
+                    {name.buzz_time === 0 && name.protocol !== "rtmp" &&
                       <PopupState variant="popover" popupId="demo-popup-menu">
                         {(popupState) => (
                           <React.Fragment>
                             <MenuItem {...bindTrigger(popupState)} divider sx={{ justifyContent: 'space-between' }}>
                               <Box>
-                                <ThemeProvider theme={THEME}>
-                                  <LongText content={name.display_name} limit={18} />
-                                </ThemeProvider>
+                                <Typography>{name.display_name}</Typography>
                               </Box>
 
                               <Box sx={{ pl: 1 }}>
 
                                 {/* สถานะ Host */}
                                 {name.role === "chair" &&
-                                  <Tooltip title="HOST">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="HOST">
-                                      <FaCrown size={20} />
-                                    </IconButton>
-                                  </Tooltip>
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="HOST">
+                                    <FaCrown />
+                                  </IconButton>
                                 }
 
                                 {/* ฟังก์ชั่นของ Presentation */}
                                 {name.is_presenting === "YES" &&
-                                  <Tooltip title="presentation">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation">
-                                      <MonitorIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation">
+                                    {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation" onClick={() => mutePresentationParticipant(name.uuid, false)}> */}
+                                    <MonitorIcon />
+                                  </IconButton>
                                 }
 
                                 {/* ฟังก์ชั่นของ Audio */}
                                 {checkParticipant === name.uuid && stateActiveSpeakers === 100 && name.is_muted === "NO" &&
-                                  <Tooltip title="Active Microphone">
-                                    <IconButton color="error" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                      <MicIcon sx={{ fontSize: 20 }} className={ButtonCSS.blob} />
-                                    </IconButton>
-                                  </Tooltip>
+                                  <IconButton color="error" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
+                                    <MicIcon className={ButtonCSS.blob} />
+                                  </IconButton>
                                 }
-                                {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name?.uuid)?.status === 'On' &&
-                                  <Tooltip title="Microphone">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                      <MicIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
+                                {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" &&
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
+                                    <MicIcon />
+                                  </IconButton>
                                 }
-                                {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name?.uuid)?.status === 'Off' &&
-                                  <Tooltip title="Mute">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                      <MicOffIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                }
-                                {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
-                                  <Tooltip title="Microphone">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                      <MicIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                }
-                                {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                  <Tooltip title="Mute">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                      <MicOffIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
+                                {checkParticipant !== name.uuid && name?.is_muted === "NO" &&
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
+                                    <MicIcon />
+                                  </IconButton>
                                 }
                                 {name.is_muted === "YES" &&
-                                  <Tooltip title="Mute by HOST">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="MuteMucrophone">
-                                      <Badge color="error" badgeContent={<CloseIcon sx={{ fontSize: 9 }} />}>
-                                        <MicIcon sx={{ fontSize: 20 }} />
-                                      </Badge>
-                                    </IconButton>
-                                  </Tooltip>
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="MuteMucrophone">
+                                    <MicOffIcon />
+                                  </IconButton>
                                 }
+                                {/* {checkParticipant === name.uuid && stateActiveSpeakers === 100 ? (
+                                  <IconButton color="error" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
+                                    <MicIcon className={ButtonCSS.blob} />
+                                  </IconButton>
+                                ) : (
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
+                                    <MicIcon />
+                                  </IconButton>
+                                )} */}
 
                                 {/* ฟังก์ชั่นของ Video */}
-                                {name.is_video_call === 'YES' && name.is_video_muted &&
-                                  <Tooltip title="Close Camera">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera">
-                                      <VideocamOffIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                }
-                                {name.is_video_call === 'YES' && !name.is_video_muted &&
-                                  <Tooltip title="Camera">
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera">
-                                      <VideocamIcon sx={{ fontSize: 20 }} />
-                                    </IconButton>
-                                  </Tooltip>
-                                }
-
+                                {name.is_video_muted ? (
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera">
+                                    {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera" onClick={() => muteVideoParticipant(name.uuid, false)}> */}
+                                    <VideocamOffIcon />
+                                  </IconButton>
+                                ) : (
+                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera">
+                                    {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera" onClick={() => muteVideoParticipant(name.uuid, true)}> */}
+                                    <VideocamIcon />
+                                  </IconButton>
+                                )}
                               </Box>
 
                             </MenuItem>
                             {pexRTC.role === 'HOST' &&
                               <Menu {...bindMenu(popupState)}>
+                                <MenuItem onClick={() => clearAllBuzzParticipant()}><PanToolIcon sx={{ mr: 1 }} />เอามือลงทั้งหมด</MenuItem>
                                 {name.is_muted === "NO" &&
-                                  <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับปิดไมค์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} /> ปิดไมค์</MenuItem>
                                 }
                                 {name.is_muted === "YES" &&
-                                  <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ยกเลิกปิดไมค์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} /> เปิดไมค์</MenuItem>
                                 }
                                 {name.is_video_muted === false &&
-                                  <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับปิดกล้อง</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} /> ปิดกล้อง</MenuItem>
                                 }
-                                {/* {name.is_video_muted === true &&
+                                {name.is_video_muted === true &&
                                   <MenuItem onClick={() => muteVideoParticipant(name.uuid, false)}><VideocamOffIcon sx={{ mr: 1 }} /> เปิดกล้อง</MenuItem>
-                                } */}
-                                {/* {name.is_presenting === "YES" &&
+                                }
+                                {name.is_presenting === "YES" &&
                                   <MenuItem onClick={() => mutePresentationParticipant(name.uuid, false)}>ปิดแชร์หน้าจอ</MenuItem>
-                                } */}
+                                }
                                 {conferenceUpdate?.guests_muted === false &&
-                                  <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ปิดไมค์ทุกคน</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} /> ปิดไมค์ทุกคน</MenuItem>
                                 }
                                 {conferenceUpdate?.guests_muted === true &&
-                                  <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ยกเลิกปิดไมค์ทุกคน</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} /> เปิดไมค์ทุกคน</MenuItem>
                                 }
-                                {name.spotlight === 0 ? (
-                                  <MenuItem onClick={() => setSpotlight(name?.uuid, true)}><RecordVoiceOverIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>สปอร์ตไลท์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
-                                ) : (
-                                  <MenuItem onClick={() => setSpotlight(name?.uuid, false)}><RecordVoiceOverIcon color="error" sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ยกเลิกสปอร์ตไลท์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
-                                )}
+                                {/* <MenuItem onClick={() => setSpotlight(name?.uuid, true)}>Spotlight</MenuItem> */}
                                 {name.role === "guest" &&
-                                  <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>มอบสิทธิ์โฮสต์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                  <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} /> มอบสิทธิ์โฮสต์</MenuItem>
                                 }
-                                {name.role === "chair" && checkRole === "HOST" && pexRTC.uuid !== name.uuid &&
-                                  <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>ถอนสิทธิ์โฮสต์</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
+                                {name.role === "chair" && pexRTC.uuid !== name.uuid &&
+                                  <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} /> ถอนสิทธิ์โฮสต์</MenuItem>
                                 }
-                                {/* <MenuItem onClick={() => requestToken(name.uuid)}><KeyIcon sx={{ mr: 1 }} /> ทดสอบการขอ token</MenuItem> */}
-                                {name?.uuid !== pexRTC.uuid &&
-                                  <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับออกจากห้อง</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
-                                }
-                                {/* <MenuItem onClick={() => disconnectAllParticipant()}><PhoneDisabledIcon color="error" sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>บังคับทุกคนออกจากห้อง</Typography>
-                                  </ThemeProvider>
-                                </MenuItem> */}
+                                {/* <MenuItem onClick={() => requestToken()}><KeyIcon sx={{ mr: 1 }} /> ทดสอบการขอ token</MenuItem> */}
+                                <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} /> บังคับออกจากห้อง</MenuItem>
                               </Menu>
                             }
                           </React.Fragment>
@@ -1231,43 +683,18 @@ function DraWer(props) {
                     }
                   </Box>
                 ))}
-              </div>
+              </Box>
             )}
 
           </Box>
         </TabPanel>
 
-        {valueIndexOfDrawer === 0 &&
-          <Box sx={{ pb: '44px' }} />
-        }
-
-        <TabPanel value={valueIndexOfDrawer} index={0} style={{ position: 'absolute', bottom: 0, width: 'inherit' }} >
-          {/* find Participants */}
-          {valueIndexOfDrawer === 0 &&
-            <InputChatBox sx={{ boxShadow: 5 }}>
-              <InputBase
-                sx={{ ml: 1, flex: 1 }}
-                placeholder="Search Participants..."
-                inputProps={{ 'aria-label': 'Search Participants...' }}
-                value={findParticipants}
-                onChange={handleFindParti}
-              />
-              <Divider sx={{ height: 30, m: 0.5 }} orientation="vertical" />
-              <IconButton type="button" sx={{ p: '10px' }} aria-label="search">
-                <SearchIcon />
-              </IconButton>
-            </InputChatBox>
-          }
-        </TabPanel>
-
         {/* ฟังก์ชั่น Chat */}
         <TabPanel value={valueIndexOfDrawer} index={1} style={{ overflow: "hidden" }}>
-          <Box sx={{ pb: '57px' }} />
-          <Box sx={{ width: "100%", height: "90vh", my: 1 }}>
+          <Box sx={{ width: "100%", height: "100vh" }}>
             <iframe width="100%" height="100%" src={`${process.env.REACT_APP_HOST_ONECHAT}/chat-plugin/authen?room_id=${room_id}&authen_token=${authen_token}&refresh_token=${refresh_token}`} frameBorder="0"></iframe>
           </Box>
         </TabPanel>
-
       </Drawer>
 
       {/* DialogParticipantsForMobile */}
@@ -1303,185 +730,36 @@ function DraWer(props) {
                 </Box>
               }
 
+              {/* โหวต */}
+              {typeVote !== '2' &&
+                <Box>
+                  {typeVote === '1' &&
+                    <Box sx={{ mx: 2, my: 2, px: 1 }}>
+                      <Button
+                        sx={{ boxShadow: 'rgba(0, 0, 0, 0.35) 0px 5px 15px', justifyItems: 'center' }}
+                        fullWidth
+                        onClick={() => openVote()}
+                        color="primary"
+                        endIcon={<PollIcon />
+                        }>โหวต</Button>
+                    </Box>
+                  }
+                  <Divider />
+                </Box>
+              }
+
               {/* ฟังก์ชั่น Buzz */}
               {listParticipants?.map((name, i) => (
                 <Box key={i}>
                   {name.buzz_time !== 0 &&
-                    <PopupState variant="popover" popupId="demo-popup-menu">
-                      {(popupState) => (
-                        <React.Fragment>
-                          <MenuItem {...bindTrigger(popupState)} divider sx={{ justifyContent: 'space-between' }}>
-                            <ThemeProvider theme={THEME}>
-                              <LongText content={name.display_name} limit={18} />
-                            </ThemeProvider>
-                            <Box sx={{ pl: 1 }}>
-                              <Tooltip title="เอามือลง">
-                                <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation">
-                                  <PanToolIcon />
-                                </IconButton>
-                              </Tooltip>
-
-                              {/* ฟังก์ชั่นของ Presentation */}
-                              {name.is_presenting === "YES" &&
-                                <Tooltip title="presentation">
-                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="presentation">
-                                    <MonitorIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              }
-
-                              {/* ฟังก์ชั่นของ Audio */}
-                              {checkParticipant === name.uuid && stateActiveSpeakers === 100 && name.is_muted === "NO" &&
-                                <Tooltip title="Active Microphone">
-                                  <IconButton color="error" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                    <MicIcon className={ButtonCSS.blob} />
-                                  </IconButton>
-                                </Tooltip>
-                              }
-                              {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
-                                <Tooltip title="Microphone">
-                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                    <MicIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              }
-                              {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                <Tooltip title="Mute">
-                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                    <MicOffIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              }
-                              {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
-                                <Tooltip title="Microphone">
-                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                    <MicIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              }
-                              {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                <Tooltip title="Mute">
-                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                    <MicOffIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              }
-                              {name.is_muted === "YES" &&
-                                <Tooltip title="Mute by HOST">
-                                  <IconButton color="default" sx={{ mx: 0 }} aria-label="MuteMucrophone">
-                                    <Badge color="error" badgeContent={<CloseIcon sx={{ fontSize: 9 }} />}>
-                                      <MicIcon />
-                                    </Badge>
-                                  </IconButton>
-                                </Tooltip>
-                              }
-
-                              {/* ฟังก์ชั่นของ Video */}
-                              {name.is_video_call === 'YES' && name.is_video_muted &&
-                                <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera">
-                                  {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera" onClick={() => muteVideoParticipant(name.uuid, false)}> */}
-                                  <VideocamOffIcon />
-                                </IconButton>
-                              }
-                              {name.is_video_call === 'YES' && !name.is_video_muted &&
-                                <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera">
-                                  {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera" onClick={() => muteVideoParticipant(name.uuid, true)}> */}
-                                  <VideocamIcon />
-                                </IconButton>
-                              }
-                            </Box>
-                          </MenuItem>
-                          {pexRTC.role === 'HOST' &&
-                            <Menu {...bindMenu(popupState)}>
-                              <MenuItem onClick={() => muteBuzzParticipant(name.uuid)}><PanToolIcon sx={{ mr: 1 }} />
-                                <ThemeProvider theme={BOLD}>
-                                  <Typography>เอามือลง</Typography>
-                                </ThemeProvider>
-                              </MenuItem>
-                              <MenuItem onClick={() => clearAllBuzzParticipant()}><PanToolIcon color="error" sx={{ mr: 1 }} />
-                                <ThemeProvider theme={BOLD}>
-                                  <Typography>เอามือลงทั้งหมด</Typography>
-                                </ThemeProvider>
-                              </MenuItem>
-                              {name.is_muted === "NO" &&
-                                <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>บังคับปิดไมค์</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              }
-                              {name.is_muted === "YES" &&
-                                <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>ยกเลิกปิดไมค์</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              }
-                              {name.is_video_muted === false &&
-                                <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>บังคับปิดกล้อง</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              }
-                              {conferenceUpdate?.guests_muted === false &&
-                                <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>ปิดไมค์ทุกคน</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              }
-                              {conferenceUpdate?.guests_muted === true &&
-                                <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>ยกเลิกปิดไมค์ทุกคน</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              }
-                              {name.spotlight === 0 ? (
-                                <MenuItem onClick={() => setSpotlight(name?.uuid, true)}><RecordVoiceOverIcon sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>สปอร์ตไลท์</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              ) : (
-                                <MenuItem onClick={() => setSpotlight(name?.uuid, false)}><RecordVoiceOverIcon color="error" sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>ยกเลิกสปอร์ตไลท์</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              )}
-                              {name.role === "guest" &&
-                                <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>มอบสิทธิ์โฮสต์</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              }
-                              {name.role === "chair" && checkRole === "HOST" && pexRTC.uuid !== name.uuid &&
-                                <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>ถอนสิทธิ์โฮสต์</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              }
-                              {name?.uuid !== pexRTC.uuid &&
-                                <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} />
-                                  <ThemeProvider theme={BOLD}>
-                                    <Typography>บังคับออกจากห้อง</Typography>
-                                  </ThemeProvider>
-                                </MenuItem>
-                              }
-                              {/* <MenuItem onClick={() => disconnectAllParticipant()}><PhoneDisabledIcon color="error" sx={{ mr: 1 }} />
-                                <ThemeProvider theme={BOLD}>
-                                  <Typography>บังคับทุกคนออกจากห้อง</Typography>
-                                </ThemeProvider>
-                              </MenuItem> */}
-                            </Menu>
-                          }
-                        </React.Fragment>
-                      )}
-                    </PopupState>
+                    <MenuItem divider sx={{ justifyContent: 'space-between' }}>
+                      <Typography>{name.display_name}</Typography>
+                      <Tooltip title="เอามือลง">
+                        <IconButton color="default" sx={{ mx: 3 }} aria-label="presentation" onClick={() => muteBuzzParticipant(name.uuid)}>
+                          <PanToolIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </MenuItem>
                   }
                 </Box>
               ))}
@@ -1491,15 +769,13 @@ function DraWer(props) {
                 <Box>
                   {listParticipants?.filter((paticipant) => paticipant.display_name.toLowerCase().includes(findParticipants.toLowerCase()))?.map((name, i) =>
                     <Box key={i}>
-                      {name.buzz_time === 0 && name.call_direction !== "out" && name.service_type !== "waiting_room" &&
+                      {name.buzz_time === 0 && name.protocol !== "rtmp" &&
                         <PopupState variant="popover" popupId="demo-popup-menu">
                           {(popupState) => (
                             <React.Fragment>
                               <MenuItem {...bindTrigger(popupState)} divider sx={{ justifyContent: 'space-between' }}>
                                 <Box>
-                                  <ThemeProvider theme={THEME}>
-                                    <LongText content={name.display_name} limit={18} />
-                                  </ThemeProvider>
+                                  <Typography>{name.display_name}</Typography>
                                 </Box>
 
                                 <Box sx={{ pl: 1 }}>
@@ -1525,131 +801,68 @@ function DraWer(props) {
                                       <MicIcon className={ButtonCSS.blob} />
                                     </IconButton>
                                   }
-                                  {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
+                                  {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" &&
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
                                       <MicIcon />
                                     </IconButton>
                                   }
-                                  {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                      <MicOffIcon />
-                                    </IconButton>
-                                  }
-                                  {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
+                                  {checkParticipant !== name.uuid && name?.is_muted === "NO" &&
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
                                       <MicIcon />
-                                    </IconButton>
-                                  }
-                                  {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                      <MicOffIcon />
                                     </IconButton>
                                   }
                                   {name.is_muted === "YES" &&
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="MuteMucrophone">
-                                      <Badge color="error" badgeContent={<CloseIcon sx={{ fontSize: 9 }} />}>
-                                        <MicIcon />
-                                      </Badge>
+                                      <MicOffIcon />
                                     </IconButton>
                                   }
 
                                   {/* ฟังก์ชั่นของ Video */}
-                                  {name.is_video_call === 'YES' && name.is_video_muted &&
+                                  {name.is_video_muted ? (
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera">
                                       {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera" onClick={() => muteVideoParticipant(name.uuid, false)}> */}
                                       <VideocamOffIcon />
                                     </IconButton>
-                                  }
-                                  {name.is_video_call === 'YES' && !name.is_video_muted &&
+                                  ) : (
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera">
                                       {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera" onClick={() => muteVideoParticipant(name.uuid, true)}> */}
                                       <VideocamIcon />
                                     </IconButton>
-                                  }
+                                  )}
                                 </Box>
 
                               </MenuItem>
                               {pexRTC.role === 'HOST' &&
                                 <Menu {...bindMenu(popupState)}>
+                                  <MenuItem onClick={() => clearAllBuzzParticipant()}><PanToolIcon sx={{ mr: 1 }} />เอามือลงทั้งหมด</MenuItem>
                                   {name.is_muted === "NO" &&
-                                    <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>บังคับปิดไมค์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} /> ปิดไมค์</MenuItem>
                                   }
                                   {name.is_muted === "YES" &&
-                                    <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ยกเลิกปิดไมค์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} /> เปิดไมค์</MenuItem>
                                   }
                                   {name.is_video_muted === false &&
-                                    <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>บังคับปิดกล้อง</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} /> ปิดกล้อง</MenuItem>
                                   }
-                                  {/* {name.is_video_muted === true &&
-                                  <MenuItem onClick={() => muteVideoParticipant(name.uuid, false)}><VideocamOffIcon sx={{ mr: 1 }} /> เปิดกล้อง</MenuItem>
-                                } */}
-                                  {/* {name.is_presenting === "YES" &&
-                                  <MenuItem onClick={() => mutePresentationParticipant(name.uuid, false)}>ปิดแชร์หน้าจอ</MenuItem>
-                                } */}
+                                  {name.is_video_muted === true &&
+                                    <MenuItem onClick={() => muteVideoParticipant(name.uuid, false)}><VideocamOffIcon sx={{ mr: 1 }} /> เปิดกล้อง</MenuItem>
+                                  }
+                                  {name.is_presenting === "YES" &&
+                                    <MenuItem onClick={() => mutePresentationParticipant(name.uuid, false)}>ปิดแชร์หน้าจอ</MenuItem>
+                                  }
                                   {conferenceUpdate?.guests_muted === false &&
-                                    <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ปิดไมค์ทุกคน</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} /> ปิดไมค์ทุกคน</MenuItem>
                                   }
                                   {conferenceUpdate?.guests_muted === true &&
-                                    <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ยกเลิกปิดไมค์ทุกคน</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} /> เปิดไมค์ทุกคน</MenuItem>
                                   }
-                                  {name.spotlight === 0 ? (
-                                    <MenuItem onClick={() => setSpotlight(name?.uuid, true)}><RecordVoiceOverIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>สปอร์ตไลท์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
-                                  ) : (
-                                    <MenuItem onClick={() => setSpotlight(name?.uuid, false)}><RecordVoiceOverIcon color="error" sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ยกเลิกสปอร์ตไลท์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
-                                  )}
                                   {name.role === "guest" &&
-                                    <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>มอบสิทธิ์โฮสต์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} /> มอบสิทธิ์โฮสต์</MenuItem>
                                   }
-                                  {name.role === "chair" && checkRole === "HOST" && pexRTC.uuid !== name.uuid &&
-                                    <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ถอนสิทธิ์โฮสต์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                  {name.role === "chair" && pexRTC.uuid !== name.uuid &&
+                                    <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} /> ถอนสิทธิ์โฮสต์</MenuItem>
                                   }
-                                  {/* <MenuItem onClick={() => requestToken()}><KeyIcon sx={{ mr: 1 }} /> ทดสอบการขอ token</MenuItem> */}
-                                  <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับออกจากห้อง</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem>
-                                  {/* <MenuItem onClick={() => disconnectAllParticipant()}><PhoneDisabledIcon color="error" sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับทุกคนออกจากห้อง</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem> */}
+                                  <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} /> บังคับออกจากห้อง</MenuItem>
                                 </Menu>
                               }
                             </React.Fragment>
@@ -1663,15 +876,13 @@ function DraWer(props) {
                 <Box>
                   {listParticipants?.map((name, i) => (
                     <Box key={i}>
-                      {name.buzz_time === 0 && name.call_direction !== "out" && name.service_type !== "waiting_room" &&
+                      {name.buzz_time === 0 && name.protocol !== "rtmp" &&
                         <PopupState variant="popover" popupId="demo-popup-menu">
                           {(popupState) => (
                             <React.Fragment>
                               <MenuItem {...bindTrigger(popupState)} divider sx={{ justifyContent: 'space-between' }}>
                                 <Box>
-                                  <ThemeProvider theme={THEME}>
-                                    <LongText content={name.display_name} limit={18} />
-                                  </ThemeProvider>
+                                  <Typography>{name.display_name}</Typography>
                                 </Box>
 
                                 <Box sx={{ pl: 1 }}>
@@ -1696,134 +907,69 @@ function DraWer(props) {
                                       <MicIcon className={ButtonCSS.blob} />
                                     </IconButton>
                                   }
-                                  {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
+                                  {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" &&
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
                                       <MicIcon />
                                     </IconButton>
                                   }
-                                  {checkParticipant === name.uuid && stateActiveSpeakers === 0 && name.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="muteMucrophone">
-                                      <MicOffIcon />
-                                    </IconButton>
-                                  }
-                                  {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'On' &&
+                                  {checkParticipant !== name.uuid && name?.is_muted === "NO" &&
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
                                       <MicIcon />
-                                    </IconButton>
-                                  }
-                                  {checkParticipant !== name.uuid && name?.is_muted === "NO" && stateMic?.find(user => user?.uid === name.uuid)?.status === 'Off' &&
-                                    <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteMucrophone">
-                                      <MicOffIcon />
                                     </IconButton>
                                   }
                                   {name.is_muted === "YES" &&
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="MuteMucrophone">
-                                      <Badge color="error" badgeContent={<CloseIcon sx={{ fontSize: 9 }} />}>
-                                        <MicIcon />
-                                      </Badge>
+                                      <MicOffIcon />
                                     </IconButton>
                                   }
 
                                   {/* ฟังก์ชั่นของ Video */}
-                                  {name.is_video_call === 'YES' && name.is_video_muted &&
+                                  {name.is_video_muted ? (
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera">
                                       {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="muteCamera" onClick={() => muteVideoParticipant(name.uuid, false)}> */}
                                       <VideocamOffIcon />
                                     </IconButton>
-                                  }
-                                  {name.is_video_call === 'YES' && !name.is_video_muted &&
+                                  ) : (
                                     <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera">
                                       {/* <IconButton color="default" sx={{ mx: 0 }} aria-label="unMuteCamera" onClick={() => muteVideoParticipant(name.uuid, true)}> */}
                                       <VideocamIcon />
                                     </IconButton>
-                                  }
-
+                                  )}
                                 </Box>
 
                               </MenuItem>
                               {pexRTC.role === 'HOST' &&
                                 <Menu {...bindMenu(popupState)}>
+                                  <MenuItem onClick={() => clearAllBuzzParticipant()}><PanToolIcon sx={{ mr: 1 }} />เอามือลงทั้งหมด</MenuItem>
                                   {name.is_muted === "NO" &&
-                                    <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>บังคับปิดไมค์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteAudioParticipant(name.uuid, true)}><MicIcon sx={{ mr: 1 }} /> ปิดไมค์</MenuItem>
                                   }
                                   {name.is_muted === "YES" &&
-                                    <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ยกเลิกปิดไมค์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteAudioParticipant(name.uuid, false)}><MicOffIcon sx={{ mr: 1 }} /> เปิดไมค์</MenuItem>
                                   }
                                   {name.is_video_muted === false &&
-                                    <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>บังคับปิดกล้อง</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteVideoParticipant(name.uuid, true)}><VideocamIcon sx={{ mr: 1 }} /> ปิดกล้อง</MenuItem>
                                   }
-                                  {/* {name.is_video_muted === true &&
-                                  <MenuItem onClick={() => muteVideoParticipant(name.uuid, false)}><VideocamOffIcon sx={{ mr: 1 }} /> เปิดกล้อง</MenuItem>
-                                } */}
-                                  {/* {name.is_presenting === "YES" &&
-                                  <MenuItem onClick={() => mutePresentationParticipant(name.uuid, false)}>ปิดแชร์หน้าจอ</MenuItem>
-                                } */}
+                                  {name.is_video_muted === true &&
+                                    <MenuItem onClick={() => muteVideoParticipant(name.uuid, false)}><VideocamOffIcon sx={{ mr: 1 }} /> เปิดกล้อง</MenuItem>
+                                  }
+                                  {name.is_presenting === "YES" &&
+                                    <MenuItem onClick={() => mutePresentationParticipant(name.uuid, false)}>ปิดแชร์หน้าจอ</MenuItem>
+                                  }
                                   {conferenceUpdate?.guests_muted === false &&
-                                    <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ปิดไมค์ทุกคน</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteAudioAllParticipant(true)}><MicIcon color="error" sx={{ mr: 1 }} /> ปิดไมค์ทุกคน</MenuItem>
                                   }
                                   {conferenceUpdate?.guests_muted === true &&
-                                    <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ยกเลิกปิดไมค์ทุกคน</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => muteAudioAllParticipant(false)}><MicOffIcon color="error" sx={{ mr: 1 }} /> เปิดไมค์ทุกคน</MenuItem>
                                   }
-                                  {name.spotlight === 0 ? (
-                                    <MenuItem onClick={() => setSpotlight(name?.uuid, true)}><RecordVoiceOverIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>สปอร์ตไลท์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
-                                  ) : (
-                                    <MenuItem onClick={() => setSpotlight(name?.uuid, false)}><RecordVoiceOverIcon color="error" sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ยกเลิกสปอร์ตไลท์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
-                                  )}
+                                  {/* <MenuItem onClick={() => setSpotlight(name?.uuid, true)}>Spotlight</MenuItem> */}
                                   {name.role === "guest" &&
-                                    <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>มอบสิทธิ์โฮสต์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                    <MenuItem onClick={() => setRole(name?.uuid, 'chair')}><KeyIcon sx={{ mr: 1 }} /> มอบสิทธิ์โฮสต์</MenuItem>
                                   }
-                                  {name.role === "chair" && checkRole === "HOST" && pexRTC.uuid !== name.uuid &&
-                                    <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>ถอนสิทธิ์โฮสต์</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
+                                  {name.role === "chair" && pexRTC.uuid !== name.uuid &&
+                                    <MenuItem onClick={() => setRole(name?.uuid, 'guest')}><KeyOffIcon sx={{ mr: 1 }} /> ถอนสิทธิ์โฮสต์</MenuItem>
                                   }
-                                  {/* <MenuItem onClick={() => requestToken()}><KeyIcon sx={{ mr: 1 }} /> ทดสอบการขอ token</MenuItem> */}
-                                  {name?.uuid !== pexRTC.uuid &&
-                                    <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} />
-                                      <ThemeProvider theme={BOLD}>
-                                        <Typography>บังคับออกจากห้อง</Typography>
-                                      </ThemeProvider>
-                                    </MenuItem>
-                                  }
-                                  {/* <MenuItem onClick={() => disconnectAllParticipant()}><PhoneDisabledIcon color="error" sx={{ mr: 1 }} />
-                                    <ThemeProvider theme={BOLD}>
-                                      <Typography>บังคับทุกคนออกจากห้อง</Typography>
-                                    </ThemeProvider>
-                                  </MenuItem> */}
+                                  <MenuItem onClick={() => disconnectParticipant(name?.uuid)}><CallEndIcon sx={{ mr: 1 }} /> บังคับออกจากห้อง</MenuItem>
                                 </Menu>
                               }
                             </React.Fragment>
@@ -1855,15 +1001,6 @@ function DraWer(props) {
           </DialogActions>
         </BootstrapDialog>
       </div>
-
-      {/* Dialog Vote */}
-      <DialogVote
-        setOpenDialogVote={setOpenDialogVote}
-        openDialogVote={openDialogVote}
-        dataVote={dataVote}
-        jwtOneChat={jwtOneChat}
-        uuidVote={uuidVote}
-      />
 
     </Box >
   );

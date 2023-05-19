@@ -1,8 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
 
-//Component
-import LoadingCamera from "../Loading/loadingCamera"
-
 //CSS
 import ZoomCss from "../CSS/zoom.module.scss"
 
@@ -19,7 +16,6 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import CameraswitchIcon from '@mui/icons-material/Cameraswitch';
 
 const theme = createTheme({
   palette: {
@@ -41,6 +37,15 @@ const NewButton = styled(Box)({
   background: "#5353FF",
 })
 
+const NewButtonMobile = styled(Box)({
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '30px',
+  height: '30px',
+  background: "#5353FF",
+})
+
 const ExpandButtonMobile = styled(Box)({
   display: 'flex',
   alignItems: 'center',
@@ -59,63 +64,65 @@ const ExpandButton = styled(Box)({
   background: "#A5A5A584",
 })
 
-function CameraUser(props) {
-  const {
-    streamCamera,
-    streamSrc,
-    micMute,
-    vidMute,
-    stateCloseCamera,
-    setStateCloseCamera,
-    stateSwitchCam,
-    setStateSwitchCam,
-    loadingCamera
-  } = props;
-  const matches = useMediaQuery(theme.breakpoints.down('md'));
-  const pexipCamera = useRef(null);
+const themeCustome = createTheme({
+  breakpoints: {
+    values: {
+      mobile: 0,
+      tablet: 640,
+      laptop: 1185,
+      desktop: 1200,
+    },
+  },
+});
 
-  // CameraUser
-  useEffect(() => {
-    if (!vidMute && !stateCloseCamera) {
-      if (pexipCamera.current) {
-        if (!stateSwitchCam) {
-          if (typeof MediaStream !== 'undefined' && streamCamera instanceof MediaStream) {
-            pexipCamera.current.srcObject = streamCamera;
-          } else {
-            pexipCamera.current.src = streamCamera;
-          }
-        } else {
-          if (typeof MediaStream !== 'undefined' && streamSrc instanceof MediaStream) {
-            pexipCamera.current.srcObject = streamSrc;
-          } else {
-            pexipCamera.current.src = streamSrc;
-          }
-        }
-      }
-    } else if (pexipCamera.current) {
-      if (typeof MediaStream !== 'undefined' && streamCamera instanceof MediaStream) {
-        pexipCamera.current.srcObject = null;
-      } else {
-        pexipCamera.current.src = null;
-      }
-    }
-  }, [streamCamera, streamSrc, stateSwitchCam, stateCloseCamera, vidMute]);
+function CameraUser(props) {
+
+  const { pexRTC, pexipCamera, micMute, setMicMute, vidMute, stateCloseCamera, setStateCloseCamera } = props;
+  const matches = useMediaQuery(theme.breakpoints.down('md'));
+
+
+  // Toggle the microphone mute
+  // function toggleMicMute() {
+  //   setMicMute(!micMute);
+  //   pexRTC.muteAudio(!micMute)
+  // }
 
   function closeCamera() {
     setStateCloseCamera(true)
-  }
-
-  function switchCamera() {
-    setStateSwitchCam(!stateSwitchCam)
   }
 
   return (
     <div>
       {matches ? (
         <div className={ZoomCss.presentWrapperMobile}>
-          {/* id="videoElement" style={{ transform: 'rotateY(180deg)'}} */}
-          <video className={ZoomCss.camera} autoPlay='autoplay' muted playsInline ref={pexipCamera}></video>
 
+          {!vidMute && !stateCloseCamera ? (
+            <video className={ZoomCss.camera} autoPlay='autoplay' muted playsInline ref={pexipCamera}></video>
+          ) : (
+            <video className={ZoomCss.noCamera} autoPlay='autoplay' muted playsInline ref={pexipCamera}></video>
+          )}
+
+          {/* {matches &&
+            <div>
+              {!stateCloseCamera && !vidMute &&
+                <div className={ZoomCss.right}>
+                  {micMute ? (
+                    <NewButtonMobile>
+                      <ThemeProvider theme={theme}>
+                        <MicOffIcon color="white" sx={{ width: '35%' }} onClick={() => toggleMicMute()} />
+                      </ThemeProvider>
+                    </NewButtonMobile>
+                  ) : (
+                    <NewButtonMobile>
+                      <ThemeProvider theme={theme}>
+                        <MicIcon color="white" sx={{ width: '35%' }} onClick={() => toggleMicMute()} />
+                      </ThemeProvider>
+                    </NewButtonMobile>
+                  )}
+                </div>
+              }
+            </div>
+          } */}
           {matches &&
             <div>
               {!stateCloseCamera && !vidMute &&
@@ -135,8 +142,11 @@ function CameraUser(props) {
       ) : (
         <div className={ZoomCss.presentWrapper}>
 
-          {/* id="videoElement" style={{ transform: 'rotateY(180deg)'}} */}
-          <video className={loadingCamera && !stateCloseCamera && !vidMute ? ZoomCss.cameraBG : ZoomCss.camera} autoPlay='autoplay' muted playsInline ref={pexipCamera}></video>
+          {!vidMute && !stateCloseCamera ? (
+            <video className={ZoomCss.camera} autoPlay='autoplay' muted playsInline ref={pexipCamera}></video>
+          ) : (
+            <video className={ZoomCss.noCamera} autoPlay='autoplay' muted playsInline ref={pexipCamera}></video>
+          )}
 
           {!matches &&
             <div>
@@ -160,37 +170,6 @@ function CameraUser(props) {
                 </div>
               }
             </div>
-          }
-
-          {!matches && loadingCamera &&
-            <Box>
-              {!stateCloseCamera && !vidMute &&
-                <div className={ZoomCss.loadcenter}>
-                  <LoadingCamera />
-                </div>
-              }
-            </Box>
-          }
-
-          {!matches &&
-            <Box
-              sx={{
-                opacity: '0%',
-                transition: 'opacity 0.8s',
-                '&:hover': {
-                  opacity: '100%',
-                  transition: 'opacity 0.8s',
-                },
-              }}
-            >
-              {!stateCloseCamera && !vidMute &&
-                <div className={ZoomCss.center}>
-                  <ThemeProvider theme={theme}>
-                    <CameraswitchIcon color="white" sx={{ fontSize: 60 }} onClick={() => switchCamera()} />
-                  </ThemeProvider>
-                </div>
-              }
-            </Box>
           }
 
           {!matches &&

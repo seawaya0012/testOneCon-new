@@ -4,4 +4,3 @@ npm - debug.log
 Dockerfile
     .DS_Store
 package - lock.json
-package-lock.json
