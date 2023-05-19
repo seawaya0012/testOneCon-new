@@ -1,0 +1,179 @@
+.centerTest {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: inherit;
+  height: inherit;
+}
+
+.wrapper {
+  width: 200px;
+  height: 60px;
+  position: relative;
+  z-index: 1;
+}
+
+.circle {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  border-radius: 50%;
+  background-color: #fff;
+  left: 15%;
+  transform-origin: 50%;
+  animation: circle7124 .5s alternate infinite ease;
+}
+
+@keyframes circle7124 {
+  0% {
+    top: 60px;
+    height: 5px;
+    border-radius: 50px 50px 25px 25px;
+    transform: scaleX(1.7);
+  }
+
+  40% {
+    height: 20px;
+    border-radius: 50%;
+    transform: scaleX(1);
+  }
+
+  100% {
+    top: 0%;
+  }
+}
+
+.circle:nth-child(2) {
+  left: 45%;
+  animation-delay: .2s;
+}
+
+.circle:nth-child(3) {
+  left: auto;
+  right: 15%;
+  animation-delay: .3s;
+}
+
+.shadow {
+  width: 20px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.9);
+  position: absolute;
+  top: 62px;
+  transform-origin: 50%;
+  z-index: -1;
+  left: 15%;
+  filter: blur(1px);
+  animation: shadow046 .5s alternate infinite ease;
+}
+
+@keyframes shadow046 {
+  0% {
+    transform: scaleX(1.5);
+  }
+
+  40% {
+    transform: scaleX(1);
+    opacity: .7;
+  }
+
+  100% {
+    transform: scaleX(.2);
+    opacity: .4;
+  }
+}
+
+.shadow:nth-child(4) {
+  left: 45%;
+  animation-delay: .2s
+}
+
+.shadow:nth-child(5) {
+  left: auto;
+  right: 15%;
+  animation-delay: .3s;
+}
+
+.loaddingContainer {
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  background-color: #121212;
+  position: absolute;
+}
+
+.toolsFuntion {
+  position: absolute;
+  top: 0;
+  display: flex;
+  align-self: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  width: auto;
+  height: 72px;
+  padding-top: 40px;
+  padding-left: 40px;
+}
+
+.toolsSettings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: flex;
+  align-self: center;
+  justify-content: flex-end;
+  box-sizing: border-box;
+  width: auto;
+  height: 72px;
+  padding-top: 40px;
+  padding-right: 40px;
+}
+
+.toolsWrapper {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-self: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 100%;
+  height: 72px;
+  padding-bottom: 86px;
+}
+
+.presentWrapper {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-self: center;
+  justify-content: start;
+  box-sizing: border-box;
+  width: 20%;
+  height: 25%;
+  padding-bottom: 25px;
+  padding-right: 15px;
+
+  .right {
+    position: absolute;
+    box-sizing: border-box;
+    top: 0;
+    right: 0;
+    padding-right: 15px;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 28px 28px;
+  }
+
+  .left {
+    position: absolute;
+    box-sizing: border-box;
+    top: 0;
+    left: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 28px 28px;
+  }
+}

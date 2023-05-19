@@ -1,0 +1,32 @@
+html,
+body {
+  // font-family: 'Roboto';
+
+  padding: 0;
+  margin: 0;
+  
+  font-family: 'Kanit', sans-serif;
+  font-weight: 600;
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 7px;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+  background-color: rgba(0,0,0,.5);
+  -webkit-box-shadow: 0 0 1px rgba(255,255,255,.5);
+}
+
+.pageContainer {
+  width: 100vw;
+  height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  // background-color: #ffffff;
+}

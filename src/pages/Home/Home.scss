@@ -1,0 +1,82 @@
+
+.pageContainer {
+  width: 100vw;
+  height: 100vh;
+  overflow-y: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .onbutton {
+    justify-content: center;
+  }
+
+  // background-color: #ffffff;
+}
+
+.callButtonControl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 70px;
+  width: 170px;
+
+  border-radius: 5px 5px 5px 5px;
+
+  .text-color {
+    color: rgba(255, 255, 255, 1);
+  }
+
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+.preflightContentHead {
+  display: flex;
+  align-items: center;
+
+  padding: 5px;
+  font-weight: 600;
+}
+
+.preflightContentBody {
+  padding: 5px;
+
+  input {
+    border-radius: 5px;
+    border: 1px solid #333;
+    padding: 10px;
+
+    width: 94%;
+  }
+
+  select {
+    border-radius: 5px;
+    border: 1px solid #333;
+    padding: 10px;
+
+    width: 100%;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
+
+.preflightContentButton {
+  margin-top: 5px;
+  width: 100%;
+
+  text-align: center;
+  grid-column: 1 / span 2;
+
+  button {
+    border-radius: 5px;
+    border: 1px solid #333;
+    padding: 10px;
+
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
